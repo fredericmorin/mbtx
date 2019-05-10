@@ -1,0 +1,50 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build firmware",
+            "type": "shell",
+            "command": "make PCB=X9D REVPLUS=1",
+            "options": {
+                "env": {
+                    "INCLUDE": "${config:arm-none-eabi.include}",
+                    "LIB": "${config:arm-none-eabi.lib}",
+                    "LIBGCC": "${config:arm-none-eabi.libgcc}/thumb/v6-m/libgcc.a",
+                },
+                "cwd": "./radio/ersky9x/src",
+            },
+            "osx": {
+                "options": {
+                    "env": {
+                        "PATH": "${config:arm-none-eabi.bin}:${env:PATH}",
+                    }
+                },
+            },
+            "linux": {
+                "options": {
+                    "env": {
+                        "PATH": "${config:arm-none-eabi.bin}:${env:PATH}",
+                    }
+                },
+            },
+            "windows": {
+                "options": {
+                    "shell": {
+                        "executable": "c:\\windows\\sysnative\\bash.exe",
+                        "args": [
+                            "-c"
+                        ]
+                    },
+                    // "env": {
+                    //     "PATH": "${config:arm-none-eabi.bin};${env:PATH}",
+                    // }
+                },
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true,
+            },
+            "problemMatcher": "$gcc"
+        }
+    ]
+}

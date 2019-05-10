@@ -1,8 +1,8 @@
 #
-#       !!!! Do NOT edit this makefile with an editor which replace tabs by spaces !!!!    
+#       !!!! Do NOT edit this makefile with an editor which replace tabs by spaces !!!!
 #
 ##############################################################################################
-# 
+#
 # On command line:
 #
 # make all = Create project
@@ -21,9 +21,10 @@ CC   = $(TRGT)gcc
 CP   = $(TRGT)objcopy
 CLSS = $(TRGT)objdump
 AS   = $(TRGT)as
+SIZE   = $(TRGT)size
 #gcc -x assembler-with-cpp
-BIN  = $(CP) -O ihex 
-BINX = $(CP) -O binary 
+BIN  = $(CP) -O ihex
+BINX = $(CP) -O binary
 
 # Object files directory
 ifeq ($(PCB), X10)
@@ -34,14 +35,14 @@ ifeq ($(PCB), X10)
   OBJDIR = x10obj
  endif
   BASIC = 1
-  CPPDEFS += -DBASIC 
+  CPPDEFS += -DBASIC
 #  LUA = 1
 #  CPPDEFS += -DLUA
 else
 ifeq ($(PCB), X12D)
   OBJDIR = x12dobj
   BASIC = 1
-  CPPDEFS += -DBASIC 
+  CPPDEFS += -DBASIC
 #  LUA = 1
 #  CPPDEFS += -DLUA
 else
@@ -49,14 +50,14 @@ ifeq ($(PCB), X9D)
  ifeq ($(REVPLUS), 1)
   OBJDIR = x9dpobj
   BASIC = 1
-  CPPDEFS += -DBASIC 
+  CPPDEFS += -DBASIC
 #  LUA = 1
 #  CPPDEFS += -DLUA
  else
   ifeq ($(REV9E), 1)
    OBJDIR = x9eobj
    BASIC = 1
-   CPPDEFS += -DBASIC 
+   CPPDEFS += -DBASIC
 #   LUA = 1
 #   CPPDEFS += -DLUA
   else
@@ -68,23 +69,23 @@ ifeq ($(PCB), X9D)
      OBJDIR = x7obj
 	 endif
     BASIC = 1
-    CPPDEFS += -DBASIC 
+    CPPDEFS += -DBASIC
 #    LUA = 1
 #    CPPDEFS += -DLUA
    else
     ifeq ($(PCBXLITE), 1)
      OBJDIR = xliteobj
      BASIC = 1
-     CPPDEFS += -DBASIC 
+     CPPDEFS += -DBASIC
     else
      ifeq ($(PCBX9LITE), 1)
       OBJDIR = x9lobj
       BASIC = 1
-      CPPDEFS += -DBASIC 
+      CPPDEFS += -DBASIC
      else
       OBJDIR = x9dobj
       BASIC = 1
-      CPPDEFS += -DBASIC 
+      CPPDEFS += -DBASIC
 #      LUA = 1
 #      CPPDEFS += -DLUA
 	  endif
@@ -99,7 +100,7 @@ else
   ifeq ($(PCB), 9XT)
     OBJDIR = sky9XTobj
     BASIC = 1
-    CPPDEFS += -DBASIC 
+    CPPDEFS += -DBASIC
 #    LUA = 1
 #    CPPDEFS += -DLUA
   else
@@ -107,17 +108,17 @@ else
    ifeq ($(REVX), 1)
     OBJDIR = skyRobj
     BASIC = 1
-    CPPDEFS += -DBASIC 
+    CPPDEFS += -DBASIC
 #    LUA = 1
 #    CPPDEFS += -DLUA
    else
     ifeq ($(SMALL), 1)
      OBJDIR = skySobj
      BASIC = 1
-     CPPDEFS += -DBASIC 
+     CPPDEFS += -DBASIC
     else
      BASIC = 1
-     CPPDEFS += -DBASIC 
+     CPPDEFS += -DBASIC
 #     LUA = 1
 #     CPPDEFS += -DLUA
      ifeq ($(LARGE), 1)
@@ -139,16 +140,16 @@ MCU  = cortex-m3
 DDEFS =
 
 # List all default ASM defines here, like -D_DEBUG=1
-DADEFS = 
+DADEFS =
 
 # List all default directories to look for include files here
-DINCDIR = 
+DINCDIR =
 
 # List the default directory to look for the libraries here
 DLIBDIR =
 
 # List all default libraries here
-DLIBS = 
+DLIBS =
 
 
 EXT = STD
@@ -168,7 +169,7 @@ PROV=$(shell sh -c "cat prov.txt")
 # Start of user section
 #
 
-# 
+#
 # Define project name and Ram/Flash mode here
 ifeq ($(PCB), X10)
  ifeq ($(PCBT16), 1)
@@ -247,17 +248,17 @@ ifeq ($(RUN_FROM_FLASH), 0)
 #     TRGT = arm-none-eabi-
 #     MCU  = cortex-m3
      CPPDEFS += -DHSE_VALUE=12000000
-	  CPPDEFS += -DPCBX9D 
+	  CPPDEFS += -DPCBX9D
      UDEFS = -Dstm32f205
    else
     ifeq ($(PCB), X12D)
      LDSCRIPT = X12D/stm32f4_flash.ld
      CPPDEFS += -DHSE_VALUE=12000000
-	  CPPDEFS += -DPCBX12D 
+	  CPPDEFS += -DPCBX12D
      UDEFS = -DSTM32F429_439xx
 	 else
      LDSCRIPT = sam3s4c_ram.ld
-	  CPPDEFS += -DPCBSKY 
+	  CPPDEFS += -DPCBSKY
      UDEFS = -Dat91sam3s4
 	 endif
 	endif
@@ -265,13 +266,13 @@ ifeq ($(RUN_FROM_FLASH), 0)
  FULL_PRJ = $(PROJECT)_ram
 else
  ifeq ($(SAM3S2), 1)
- CPPDEFS += -DPCBSKY 
+ CPPDEFS += -DPCBSKY
  LDSCRIPT = sam3s2c_flash.ld
  else
   ifeq ($(PCB), 9XT)
    LDSCRIPT = X9D/stm32_flash.ld
    CPPDEFS += -DHSE_VALUE=12000000
-   CPPDEFS += -DPCB9XT 
+   CPPDEFS += -DPCB9XT
    CPPDEFS += -DPCBSP
    CPPDEFS += -DUSB_JOYSTICK
    UDEFS = -Dstm32f205
@@ -282,7 +283,7 @@ else
 #     TRGT = arm-none-eabi-
 #     MCU  = cortex-m3
      CPPDEFS += -DHSE_VALUE=12000000
-	  CPPDEFS += -DPCBX9D 
+	  CPPDEFS += -DPCBX9D
      CPPDEFS += -DUSB_JOYSTICK
      UDEFS = -Dstm32f205
      ifeq ($(PCBX7), 1)
@@ -298,26 +299,26 @@ else
     ifeq ($(PCB), X10)
      LDSCRIPT = X12D/stm32f4_flash.ld
      CPPDEFS += -DHSE_VALUE=12000000
-	  CPPDEFS += -DPCBX10 
+	  CPPDEFS += -DPCBX10
      CPPDEFS += -DUSB_JOYSTICK
      UDEFS = -DSTM32F429_439xx
 	 else
     ifeq ($(PCB), X12D)
      LDSCRIPT = X12D/stm32f4_flash.ld
      CPPDEFS += -DHSE_VALUE=12000000
-	  CPPDEFS += -DPCBX12D 
+	  CPPDEFS += -DPCBX12D
      CPPDEFS += -DUSB_JOYSTICK
      UDEFS = -DSTM32F429_439xx
 	 else
-    CPPDEFS += -DPCBSKY 
+    CPPDEFS += -DPCBSKY
 	 ifeq ($(SMALL), 1)
-    	CPPDEFS += -DSMALL 
+    	CPPDEFS += -DSMALL
 	 endif
     ifeq ($(PCB), DUE)
       LDSCRIPT = due/sam3x8_flash.ld
       UDEFS = -Dat91sam3x8
 		UDEFS  += -D__SAM3X8E__
-      CPPDEFS += -DPCBDUE 
+      CPPDEFS += -DPCBDUE
 	 else
      ifeq ($(REVX), 1)
       LDSCRIPT = sam3s8c_flash.ld
@@ -348,7 +349,7 @@ endif
 # List all user C define here, like -D_DEBUG=1
 
 #ifeq ($(PCB), X9D)
-#UDEFS = 
+#UDEFS =
 #endif
 
 ifeq ($(SAM3S2), 1)
@@ -368,7 +369,7 @@ ifeq ($(USB_JOYSTICK), 1)
 endif
 
 # Define ASM defines here
-UADEFS = 
+UADEFS =
 
 #    LUASRC = $(LUADIR)/lapi.c $(LUADIR)/lcode.c $(LUADIR)/lctype.c $(LUADIR)/ldebug.c $(LUADIR)/ldo.c $(LUADIR)/ldump.c $(LUADIR)/lfunc.c $(LUADIR)/lgc.c $(LUADIR)/llex.c $(LUADIR)/lmem.c \
 #           $(LUADIR)/lobject.c $(LUADIR)/lopcodes.c $(LUADIR)/lparser.c $(LUADIR)/lstate.c $(LUADIR)/lstring.c $(LUADIR)/ltable.c $(LUADIR)/lrotable.c $(LUADIR)/ltm.c $(LUADIR)/lundump.c $(LUADIR)/lvm.c $(LUADIR)/lzio.c \
@@ -454,7 +455,6 @@ CPPSRC = ersky9x.cpp \
          X12D/led_driver.cpp \
          X12D/usbd_usr.cpp \
 			loadboot.cpp \
-			pxx2.cpp \
 			lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -556,7 +556,6 @@ CPPSRC = ersky9x.cpp \
          X12D/led_driver.cpp \
          X12D/usbd_usr.cpp \
 			loadboot.cpp \
-			pxx2.cpp \
 			lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -661,7 +660,6 @@ CPPSRC = ersky9x.cpp \
 			mavlink.cpp \
 			sbus.cpp \
          X9D/usbd_usr.cpp \
-			pxx2.cpp \
 		   lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -794,7 +792,6 @@ CPPSRC = ersky9x.cpp \
 			mega64.cpp \
 			isp.cpp \
          X9D/usbd_usr.cpp \
-			pxx2.cpp \
 		   lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -875,7 +872,6 @@ CPPSRC = stamp.cpp \
 			maintenance.cpp \
 			mavlink.cpp \
 			sbus.cpp \
-			pxx2.cpp \
 			logs.cpp
 
 ifeq ($(LUA), 1)
@@ -896,7 +892,7 @@ CPPSRC += no.cpp se.cpp it.cpp pl.cpp vi.cpp sp.cpp
 #       sky/usb/USBSetAddressRequest.c sky/usb/USBSetConfigurationRequest.c \
 #       sky/usb/USBConfigurationDescriptor.c sky/usb/USBGenericDescriptor.c \
 #       sky/usb/MSDDriver.c sky/usb/MSDLun.c sky/usb/MSDDriverDescriptors.c sky/usb/SBCMethods.c \
-#       sky/MEDSdcard.c sky/usb/MSDDStateMachine.c 
+#       sky/MEDSdcard.c sky/usb/MSDDStateMachine.c
 
 ifeq ($(USB_JOYSTICK), 1)
 SRC += sky/joy/HIDDJoystickDriver.c
@@ -959,7 +955,7 @@ UINCDIR = ./sky/joy/inc
 ULIBDIR =
 
 # List all user libraries here
-ULIBS = 
+ULIBS =
 
 # Define optimisation level here
 OPT = -Os
@@ -1111,15 +1107,19 @@ CPPFLAGS += -MD -MP -MF $(OBJDIR)/$(@F).d
 # makefile rules
 #
 
-all: size_before stamp $(AOBJS) $(COBJS) $(CPPOBJS) $(FULL_PRJ).elf $(FULL_PRJ).hex $(FULL_PRJ).bin $(FULL_PRJ).lss size
+all: size_before stamp $(AOBJS) $(COBJS) $(CPPOBJS) $(FULL_PRJ).elf $(FULL_PRJ).bin $(FULL_PRJ).lss size
+
+# stamp.cpp: stamp-ersky9x.h
+
+# stamp-ersky9x.h: stamp
 
 size_before:
-#	arm-none-eabi-size $(FULL_PRJ).elf
-	@if test -f $(FULL_PRJ).elf; then arm-none-eabi-size $(FULL_PRJ).elf; fi
+#	$(SIZE) $(FULL_PRJ).elf
+	@if test -f $(FULL_PRJ).elf; then $(SIZE) $(FULL_PRJ).elf; fi
 
 size:
-#	arm-none-eabi-size $(FULL_PRJ).elf
-	@if test -f $(FULL_PRJ).elf; then arm-none-eabi-size $(FULL_PRJ).elf; fi
+#	$(SIZE) $(FULL_PRJ).elf
+	@if test -f $(FULL_PRJ).elf; then $(SIZE) $(FULL_PRJ).elf; fi
 
 # Build stamp-file
 stamp:
@@ -1132,10 +1132,10 @@ stamp:
 	@echo "#define TIME_STR \"`date +%H:%M:%S`\"" >> stamp-ersky9x.h
 #	@echo "#define SUB_VERS $(VER)-$(USER)" >> stamp-ersky9x.h
  ifeq ($(PCB), X9D)
-	@echo "#define SVN_VERS \"erx9d-$(PROV)r$(REV)\"" >> stamp-ersky9x.h
+	@echo "#define SVN_VERS \"erx9d-$(PROV)\"" >> stamp-ersky9x.h
 	@echo "#define MOD_VERS \"$(EXT_MOD)\"" >> stamp-ersky9x.h
- else	
-	@echo "#define SVN_VERS \"ersky9x-$(PROV)r$(REV)\"" >> stamp-ersky9x.h
+ else
+	@echo "#define SVN_VERS \"ersky9x-$(PROV)\"" >> stamp-ersky9x.h
 	@echo "#define MOD_VERS \"$(EXT_MOD)\"" >> stamp-ersky9x.h
  endif
 #	@cat stamp-ersky9x.h
@@ -1164,9 +1164,9 @@ $(AOBJS) : $(OBJDIR)/%.o : %.s
 
 #%elf: $(OBJS)
 #	$(CC) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
-%elf: $(AOBJS) $(COBJS) $(CPPOBJS) 
+%elf: $(AOBJS) $(COBJS) $(CPPOBJS)
 	$(CC) $(AOBJS) $(COBJS) $(CPPOBJS) $(LDFLAGS) $(LIBS) -o $@
-  
+
 # Create extended listing file from ELF output file.
 %.lss: %.elf
 	$(CLSS) -h -S $< > $@
@@ -1178,20 +1178,20 @@ $(AOBJS) : $(OBJDIR)/%.o : %.s
 	$(BINX) $< $@
 
 clean:
-	-rm -f x9dobj/*.*
-	-rm -f x9eobj/*.*
-	-rm -f x9dpobj/*.*
-	-rm -f x12dobj/*.*
-	-rm -f skyobj/*.*
-	-rm -f skyRobj/*.*
-	-rm -f skySobj/*.*
-	-rm -f skyLobj/*.*
-	-rm -f sky9XTobj/*.*
-	-rm -f x7obj/*.*
-	-rm -f xliteobj/*.*
-	-rm -f x9lobj/*.*
-	-rm -f t12obj/*.*
-	-rm -f t16obj/*.*
+	-rm -rf x9dobj
+	-rm -rf x9eobj
+	-rm -rf x9dpobj
+	-rm -rf x12dobj
+	-rm -rf skyobj
+	-rm -rf skyRobj
+	-rm -rf skySobj
+	-rm -rf skyLobj
+	-rm -rf sky9XTobj
+	-rm -rf x7obj
+	-rm -rf xliteobj
+	-rm -rf x9lobj
+	-rm -rf t12obj
+	-rm -rf t16obj
 	-rm -f $(FULL_PRJ).elf
 	-rm -f $(FULL_PRJ).map
 	-rm -f $(FULL_PRJ).hex
@@ -1202,11 +1202,11 @@ clean:
 	-rm -f $(ASRC:.s=.lst)
 	-rm -fR .dep
 
-# 
-# Include the dependency files, should be the last of the makefile
-#
-#-include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
-# Add in all the dependancy files
+# #
+# # Include the dependency files, should be the last of the makefile
+# #
+# #-include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
+# # Add in all the dependancy files
 -include $(INCLUDES)
 
-# *** EOF ***
+# # *** EOF ***

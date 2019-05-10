@@ -70,7 +70,7 @@ uint8_t RawWriteBuffer ;
 // Master telemetry/logging index
 //const uint8_t LogIndex[] =
 //{
-//	
+//
 //} ;
 
 
@@ -78,7 +78,7 @@ void rawLogByte( uint8_t byte )
 {
 	uint8_t *p ;
 	p = RawActiveBuffer ? RawBuffer1 : RawBuffer0 ;
-	
+
 	if ( RawLogging == 2 )
 	{
     char c = byte >> 4 ;
@@ -118,7 +118,7 @@ void rawStartLogging()
 void setFilenameDateTime( char *filename, uint32_t includeTime )
 {
   filename[0] = '-';
-  
+
 	div_t qr = div( Time.year, 10);
   filename[4] = '0' + qr.rem;
   qr = div(qr.quot, 10);
@@ -147,7 +147,7 @@ void setFilenameDateTime( char *filename, uint32_t includeTime )
 	  filename[17] = '0' + qr.rem;
   	filename[16] = '0' + qr.quot;
 	}
-	 
+
 }
 
 uint32_t isLogEnabled( uint32_t index )
@@ -193,7 +193,7 @@ void logSingleDiv100( uint32_t enable, int32_t value )
 	div_t qr ;
 	if ( isLogEnabled( enable ) )
 	{
-		qr = div( value, 100 ) ;
+		qr = div( (int)value, (int)100 ) ;
 		f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
 	}
 }
@@ -282,7 +282,7 @@ extern uint32_t sdMounted( void ) ;
   }
 
 	setFilenameDateTime( &filename[len], g_model.logNew ) ;
-	
+
   strcpy_P(&filename[len + (g_model.logNew ? 18 : 11) ], RawLogging ? ".raw" : ".csv" ) ;
 
 	CoTickDelay(1) ;					// 2mS
@@ -311,9 +311,9 @@ extern uint32_t sdMounted( void ) ;
 	}
 
   f_puts("Time,Elapsed,Valid", &g_oLogFile) ;
-	
+
 	singleHeading( LOG_RSSI, ",RxRSSI" ) ;
-	
+
 //	if ( isLogEnabled( LOG_RSSI ) )
 //	{
 //  	f_puts(",RxRSSI", &g_oLogFile) ;
@@ -356,7 +356,7 @@ extern uint32_t sdMounted( void ) ;
 //  		f_puts(&",Temp1\0,Temp2"[j*7], &g_oLogFile);
 //		}
 //	}
-	
+
 	singleHeading( LOG_RPM, ",RPM" ) ;
 //	if ( isLogEnabled( LOG_RPM ) )
 //	{
@@ -437,7 +437,7 @@ extern uint32_t sdMounted( void ) ;
 //	{
 //		f_puts(",Ctot", &g_oLogFile);
 //	}
-	
+
 	for ( j = 0 ; j < NUM_SCALERS ; j += 1 )
 	{
 		if ( isLogEnabled( LOG_SC1 + j ) )
@@ -448,7 +448,7 @@ extern uint32_t sdMounted( void ) ;
 	  		f_puts((const char *)text, &g_oLogFile);
 			}
 			else
-			{			
+			{
   			f_puts(&",SC1\0,SC2\0,SC3\0,SC4\0,SC5\0,SC6\0,SC7\0,SC8"[j*5], &g_oLogFile);
 			}
 		}
@@ -473,7 +473,7 @@ extern uint32_t sdMounted( void ) ;
 //	{
 //  	f_puts(",Aspd", &g_oLogFile);
 //  }
-	
+
 	singleHeading( LOG_RBV1, ",RBv1" ) ;
 //	if ( isLogEnabled( LOG_RBV1 ) )
 //	{
@@ -522,7 +522,7 @@ extern uint32_t sdMounted( void ) ;
   		f_puts(&",Cel1 \0,Cel2 \0,Cel3 \0,Cel4 \0,Cel5 \0,Cel6 \0,Cel7 \0,Cel8 \0,Cel9 \0,Cel10\0,Cel11\0,Cel12"[j*7], &g_oLogFile);
 		}
 	}
-	
+
 	for ( j = 0 ; j < 6 ; j += 1 )
 	{
 		if ( isLogEnabled( j + LOG_CUST1 ) )
@@ -533,14 +533,14 @@ extern uint32_t sdMounted( void ) ;
 	  		f_puts((const char *)text, &g_oLogFile);
 			}
 			else
-			{			
+			{
 	  		f_puts(&",Cus1 \0,Cus2 \0,Cus3 \0,Cus4 \0,Cus5 \0,Cus6 "[j*7], &g_oLogFile);
 			}
 		}
 	}
 	singleHeading( LOG_CTOTAL1, ",Ctot1" ) ;
 	singleHeading( LOG_CTOTAL2, ",Ctot2" ) ;
-  
+
 	singleHeading( LOG_STK_THR, ",Stk_THR" ) ;
 //	if ( isLogEnabled( LOG_STK_THR ) )
 //	{
@@ -613,8 +613,8 @@ void writeLogs()
       	f_printf(&g_oLogFile,  ".5" ) ;	// Elapsed log time
 			}
       f_printf(&g_oLogFile, ",%d", frskyUsrStreaming * 100 + frskyStreaming ) ;
-			
-			
+
+
 			logSingleNumber( LOG_RSSI, FrskyHubData[FR_RXRSI_COPY] ) ;
 //			if ( isLogEnabled( LOG_RSSI ) )
 //      {
@@ -629,7 +629,7 @@ void writeLogs()
 			{
 				f_printf(&g_oLogFile, ",%d,%d", DsmABLRFH[4],DsmABLRFH[5] ) ;
 			}
-			
+
 			int16_t value ;
 			uint8_t dps ;
 			if ( isLogEnabled( LOG_A1 ) )
@@ -644,7 +644,7 @@ void writeLogs()
 				qr = div( value, dps ) ;
 				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 			}
-      
+
 			if ( isLogEnabled( LOG_ALT ) )
 			{
 				value =  FrskyHubData[FR_ALT_BARO] + AltOffset ;
@@ -655,14 +655,14 @@ void writeLogs()
       	 		value = m_to_ft( value ) ;
 					}
 				}
-				value /= 10 ;									
+				value /= 10 ;
 				f_printf(&g_oLogFile, ",%d", value ) ;
 			}
 			logSingleNumber( LOG_GALT, FrskyHubData[TELEM_GPS_ALT] ) ;
 //			if ( isLogEnabled( LOG_GALT ) )
 //			{
 //				f_printf(&g_oLogFile, ",%d", FrskyHubData[TELEM_GPS_ALT]) ;
-//			}	
+//			}
 			logSingleNumber( LOG_TEMP1, FrskyHubData[FR_TEMP1] ) ;
 //			if ( isLogEnabled( LOG_TEMP1 ) )
 //			{
@@ -742,7 +742,7 @@ void writeLogs()
 //			{
 //				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_HOME_DIR] ) ;
 //			}
-			
+
 			if ( isLogEnabled( LOG_LAT ) )
 			{
 				if ( g_eeGeneral.gpsFormat )
@@ -781,7 +781,7 @@ void writeLogs()
 					f_printf(&g_oLogFile, ",%d.%04d%c", FrskyHubData[FR_GPS_LONG],FrskyHubData[FR_GPS_LONGd],FrskyHubData[FR_LONG_E_W] ) ;
 				}
 			}
-			
+
 			logSingleNumber( LOG_FUEL, FrskyHubData[FR_FUEL] ) ;
 //			if ( isLogEnabled( LOG_FUEL ) )
 //			{
@@ -792,7 +792,7 @@ void writeLogs()
 //			{
 //				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_GPS_SPEED] ) ;
 //			}
-			
+
 			logSingleDiv100( LOG_CVLT, FrskyHubData[FR_CELL_MIN] ) ;
 //			if ( isLogEnabled( LOG_CVLT ) )
 //			{
@@ -856,7 +856,7 @@ extern uint16_t RemBitMeasure ;
 extern uint8_t M64Buttons ;
 extern uint16_t M64Switches ;
 				f_printf(&g_oLogFile, ",%d,%d", RemBitMeasure, M64RxCount ) ;
-				M64RxCount = 0 ;				
+				M64RxCount = 0 ;
 				f_printf(&g_oLogFile, ",%d,%d,", M64Buttons, M64Switches ) ;
 extern uint8_t M64DebugData[] ;
 extern uint8_t SlaveTempReceiveBuffer[] ;
@@ -1523,5 +1523,3 @@ WCHAR ff_wtoupper (	/* Upper converted character */
 
 	return tbl_lower[i] ? tbl_upper[i] : chr;
 }
-
-

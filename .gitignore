@@ -156,3 +156,5 @@ eepe
 /eepe/eepskye/src/adjusterDialog.ui
 x12dpobj
 elua
+.vscode/
+!.vscode/*json

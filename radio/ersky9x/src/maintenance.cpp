@@ -268,60 +268,6 @@ uint8_t MultiState ;
 #ifndef NO_MULTI
 void initMultiMode()
 {
-#ifdef PCBSKY
-#ifdef REVX
-	init_mtwi() ;
-	clearMfp() ;
-#endif
-	USART0->US_IDR = US_IDR_RXRDY ;
-	UART0->UART_IDR = UART_IDR_RXRDY ;
-	if ( MultiPort )
-	{
-		init_software_com2( 57600, MultiInvert ? SERIAL_NORM : SERIAL_INVERT, SERIAL_NO_PARITY ) ;
-//		if ( PIOA->PIO_PDSR & PIO_PA9 )
-//		{
-//			init_software_com2( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
-//		}
-	}
-	else
-	{
-		init_software_com1( 57600, MultiInvert ? SERIAL_NORM : SERIAL_INVERT, SERIAL_NO_PARITY ) ;
-//		if ( PIOA->PIO_PDSR & PIO_PA5 )
-//		{
-//			init_software_com1( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
-//		}
-	}
-	if ( MultiModule )
-	{
-		SET_TX_BIT_INT() ;
-		configure_pins( PIO_PC15, PIN_ENABLE | PIN_OUTPUT | PIN_PORTC | PIN_HIGH ) ;
-	}
-	else
-	{
-		SET_TX_BIT_EXT() ;
-		configure_pins( PIO_PA17, PIN_ENABLE | PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
-	}
-#endif
-#ifdef PCB9XT
-	if ( MultiPort )
-	{
-		com2_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
-	}
-	else
-	{
-		com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
-	}
-	if ( MultiModule )
-	{
-		configure_pins( PIN_INTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
-		INTERNAL_RF_ON() ;
-	}
-	else
-	{
-		configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
-		EXTERNAL_RF_ON() ;
-	}
-#endif
 #ifdef PCBX9D
 	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 	EXTERNAL_RF_ON() ;
@@ -331,47 +277,6 @@ void initMultiMode()
 
 void stopMultiMode()
 {
-	
-#ifdef PCBSKY
-	if ( MultiPort )
-	{
-		disable_software_com2() ;
-	}
-	else
-	{
-		disable_software_com1() ;
-	}
-	if ( MultiModule )
-	{
-		SET_TX_BIT_INT() ;
-		configure_pins( PIO_PC15, PIN_ENABLE | PIN_INPUT | PIN_PORTC | PIN_PULLUP ) ;
-	}
-	else
-	{
-		configure_pins( PIO_PA17, PIN_ENABLE | PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
-	}
-	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
-#endif
-#ifdef PCB9XT
-	if ( MultiPort )
-	{
-		com2_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
-	}
-	else
-	{
-		com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
-	}
-	if ( MultiModule )
-	{
-		INTERNAL_RF_OFF() ;
-		configure_pins( PIN_INTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
-	}
-	else
-	{
-		EXTERNAL_RF_OFF() ;
-		configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
-	}
-#endif
 #ifdef PCBX9D
 	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 //#if /*defined(PCBXLITE) || */ defined(PCBX9LITE)
@@ -398,39 +303,6 @@ void sendMultiByte( uint8_t byte )
 {
 	uint16_t time ;
 	uint32_t i ;
-	
-#ifdef PCBSKY
-	Pio *pioptr ;
-	uint32_t bit ;
-	
-	if ( MultiModule )
-	{
-		pioptr = PIOC ;
-		bit = PIO_PC15 ;
-	}
-	else
-	{
-		pioptr = PIOA ;
-		bit = PIO_PA17 ;
-	}
-#define CLEAR_TX_BIT() pioptr->PIO_CODR = bit
-#define SET_TX_BIT() pioptr->PIO_SODR = bit
-#endif
-
-#ifdef PCB9XT
-	uint32_t bit ;
-	
-	if ( MultiModule )
-	{
-		bit = 0x0400 ;
-	}
-	else
-	{
-		bit = 0x0080 ;
-	}
-#define CLEAR_TX_BIT() GPIOA->BSRRH = bit
-#define SET_TX_BIT() GPIOA->BSRRL = bit
-#endif
 
 	__disable_irq() ;
 	time = getTmr2MHz() ;
@@ -467,71 +339,6 @@ void sendMultiByte( uint8_t byte )
 #endif
 
 
-#ifdef PCBSKY
-//uint32_t (*IAP_Function)(uint32_t, uint32_t) ;
-extern uint32_t ChipId ;
-
-uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
-{
-	uint32_t FlashSectorNum ;
-	uint32_t flash_cmd = 0 ;
-	uint32_t i ;
-	uint32_t size ;
-	
-	if ( (uint32_t) address >= 0x00408000 )
-	{
-		return 1 ;
-	}
-
-	// Always initialise this here, setting a default doesn't seem to work
-	SharedMemory.Mdata.IAP_Function = (uint32_t (*)(uint32_t, uint32_t))  *(( uint32_t *)0x00800008) ;
-	FlashSectorNum = (uint32_t) address ;
-	
-	if ( ChipId & 0x0080 )
-	{
-		size = 128 ;
-		FlashSectorNum >>= 9 ;		// page size is 512 bytes
-		FlashSectorNum &= 1023 ;	// max page number
-	}
-	else
-	{
-		size = 64 ;
-		FlashSectorNum >>= 8 ;		// page size is 256 bytes
-		FlashSectorNum &= 2047 ;	// max page number
-	}
-
-	/* Send data to the sector here */
-	for ( i = 0 ; i < size ; i += 1 )
-	{
-		*address++ = *buffer++ ;		
-	}
-
-	if ( ChipId & 0x0080 )
-	{
-		if ( ( FlashSectorNum & 7 ) == 0 )
-		{
-			flash_cmd = (0x5A << 24) | (FlashSectorNum << 8) | 0x00000100 | 0x07 ; //AT91C_MC_FCMD_EPA = erase (8) pages
-			__disable_irq() ;
-			/* Call the IAP function with appropriate command */
-			i = SharedMemory.Mdata.IAP_Function( 0, flash_cmd ) ;
-			__enable_irq() ;
-		}
-		flash_cmd = (0x5A << 24) | (FlashSectorNum << 8) | 0x01 ; //AT91C_MC_FCMD_WP = write page
-	}
-	else
-	{
-		/* build the command to send to EEFC */
-		flash_cmd = (0x5A << 24) | (FlashSectorNum << 8) | 0x03 ; //AT91C_MC_FCMD_EWP ;
-	}
-
-	__disable_irq() ;
-	/* Call the IAP function with appropriate command */
-	i = SharedMemory.Mdata.IAP_Function( 0, flash_cmd ) ;
-	__enable_irq() ;
-	return i ;
-}
-#endif
-
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 //After reset, write is not allowed in the Flash control register (FLASH_CR) to protect the
 //Flash memory against possible unwanted operations due, for example, to electric
@@ -567,14 +374,14 @@ void eraseSector( uint32_t sector )
   FLASH->CR |= FLASH_CR_SER | (sector<<3) ;
 	__disable_irq() ;
   FLASH->CR |= FLASH_CR_STRT;
-    
+
   /* Wait for operation to be completed */
 	waitFlashIdle() ;
 	__enable_irq() ;
-    
+
   /* if the erase operation is completed, disable the SER Bit */
   FLASH->CR &= (~FLASH_CR_SER);
-  FLASH->CR &= SECTOR_MASK; 
+  FLASH->CR &= SECTOR_MASK;
 }
 
 uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
@@ -599,42 +406,28 @@ extern void initLongWatchdog(uint32_t time) ;
 	{
 		eraseSector( 1 ) ;
 	}
-#if defined(PCBX12D) || defined(PCBX10)
-	if ( (uint32_t) address == 0x08008000 )
-	{
-		eraseSector( 2 ) ;
-	}
-	if ( (uint32_t) address == 0x0800C000 )
-	{
-		eraseSector( 3 ) ;
-	}
-	if ( (uint32_t) address == 0x08010000 )
-	{
-		eraseSector( 4 ) ;
-	}
-#endif
 	// Now program the 256 bytes
-	 
+
   for (i = 0 ; i < 64 ; i += 1 )
   {
     /* Device voltage range supposed to be [2.7V to 3.6V], the operation will
-       be done by word */ 
-    
+       be done by word */
+
 	  // Wait for last operation to be completed
 		waitFlashIdle() ;
-  
+
     FLASH->CR &= CR_PSIZE_MASK;
     FLASH->CR |= FLASH_PSIZE_WORD;
     FLASH->CR |= FLASH_CR_PG;
-  
+
     *address = *buffer ;
-        
+
 		__disable_irq() ;
     /* Wait for operation to be completed */
 		waitFlashIdle() ;
     FLASH->CR &= (~FLASH_CR_PG);
 		__enable_irq() ;
-		 
+
 		 /* Check the written value */
     if ( *address != *buffer )
     {
@@ -655,7 +448,7 @@ uint32_t validateFile( uint32_t *block )
 {
 	uint32_t i ;
 	uint8_t *bytes ;
-	
+
 #if defined(PCBX9D) || defined(PCB9XT)
 	if ( ( block[0] & 0xFFFC0000 ) != 0x20000000 )
 	{
@@ -748,7 +541,7 @@ FRESULT readBinDir( DIR *dj, FILINFO *fno, struct fileControl *fc )
 			int32_t len = strlen(fno->lfname) - 4 ;
 			if ( fc->ext[3] )
 			{
-				len -= 1 ;			
+				len -= 1 ;
 			}
 			if ( len < 0 )
 			{
@@ -784,7 +577,7 @@ FRESULT readBinDir( DIR *dj, FILINFO *fno, struct fileControl *fc )
 			{
 				loop = 1 ;
 			}
-		}	
+		}
 	} while ( loop ) ;
 	return fr ;
 }
@@ -800,7 +593,7 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 	SharedMemory.FileList.Finfo.lfname = SharedMemory.FileList.Filenames[0] ;
 	SharedMemory.FileList.Finfo.lfsize = 48 ;
 	WatchdogTimeout = 300 ;		// 3 seconds
-	DIR *pDj = &SharedMemory.FileList.Dj ;	
+	DIR *pDj = &SharedMemory.FileList.Dj ;
 	if ( VoiceFileType == VOICE_FILE_TYPE_MUSIC )
 	{
 #ifdef WHERE_TRACK
@@ -905,11 +698,11 @@ uint32_t fileList(uint8_t event, struct fileControl *fc )
 	uint32_t result = 0 ;
   uint8_t maxhsize ;
 	uint32_t i ;
-			 
+
 	limit = 6 ;
 	if ( fc->nameCount < limit )
 	{
-		limit = fc->nameCount ;						
+		limit = fc->nameCount ;
 	}
 	maxhsize = 0 ;
 	for ( i = 0 ; i < limit ; i += 1 )
@@ -919,7 +712,7 @@ uint32_t fileList(uint8_t event, struct fileControl *fc )
 		len = x = strlen( SharedMemory.FileList.Filenames[i] ) ;
 		if ( x > maxhsize )
 		{
-			maxhsize = x ;							
+			maxhsize = x ;
 		}
 		if ( x > DISPLAY_CHAR_WIDTH )
 		{
@@ -1056,7 +849,7 @@ void lcd_putsnAtt0(uint8_t x,uint8_t y, const char * s,uint8_t len,uint8_t mode)
     c = *s++ ;
 		if ( c == 0 )
 		{
-			break ;			
+			break ;
 		}
     x = lcd_putcAtt(x,y,c,mode);
     len--;
@@ -1110,7 +903,7 @@ void setCrc()
 void menuChangeId(uint8_t event)
 {
 	static uint32_t state ;
- 	
+
 	TITLE( "CHANGE SPort Id" ) ;
 
 //	lcd_puts_Pleft( 2*FH, "Not Implemented(yet)" ) ;
@@ -1118,7 +911,7 @@ void menuChangeId(uint8_t event)
 	switch(event)
 	{
     case EVT_ENTRY:
-			RxPacket[1] = 0 ;			
+			RxPacket[1] = 0 ;
 			RxCount = 0 ;
 			RxLastCount = 0 ;
 			FrskyTelemetryType = FRSKY_TEL_SPORT ;
@@ -1133,12 +926,12 @@ void menuChangeId(uint8_t event)
 			SPORT_RF_ON() ;
 #endif
     break ;
-    
+
 		case EVT_KEY_LONG(BTN_RE) :
 			if ( g_eeGeneral.disableBtnLong )
 			{
 				break ;
-			}		
+			}
 		case EVT_KEY_FIRST(KEY_EXIT):
      	chainMenu(menuUpdate) ;
    		killEvents(event) ;
@@ -1149,7 +942,7 @@ void menuChangeId(uint8_t event)
 #endif
 #endif
     break ;
-		
+
 		case EVT_KEY_FIRST(KEY_UP):
 			if ( state == CHANGE_ENTER_ID )
 			{
@@ -1169,7 +962,7 @@ void menuChangeId(uint8_t event)
 				}
 			}
     break ;
-    
+
 		case EVT_KEY_FIRST(KEY_DOWN):
 			if ( state == CHANGE_ENTER_ID )
 			{
@@ -1196,7 +989,7 @@ void menuChangeId(uint8_t event)
 				state = CHANGE_ENTER_ID ;
 			}
     break ;
-		
+
 		case EVT_KEY_FIRST(KEY_MENU):
 			if ( state == CHANGE_ENTER_ID )
 			{
@@ -1244,7 +1037,7 @@ void menuChangeId(uint8_t event)
 #endif
 			}
 		break ;
-	
+
 		case CHANGE_ENTER_ID :
 			lcd_puts_Pleft( 3*FH, "New Id: " ) ;
 	    lcd_outdez( 9*FW, 3*FH, NewPhyId ) ;
@@ -1275,7 +1068,7 @@ void menuChangeId(uint8_t event)
 				SendCount = 100 ;
 			}
 		break ;
-		
+
 		case CHANGE_SET_VALUE :
 			lcd_puts_Pleft( 3*FH, "Set Active state" ) ;
 			if ( --SendCount == 0)
@@ -1302,7 +1095,7 @@ void menuChangeId(uint8_t event)
 
 			}
 		break ;
-		
+
 		case CHANGE_FINISHED :
 			lcd_puts_Pleft( 3*FH, "Id Changed" ) ;
 			PhyId = NewPhyId ;
@@ -1310,7 +1103,7 @@ void menuChangeId(uint8_t event)
 			{
 				state = CHANGE_SCANNING ;
 				IdFound = 0 ;
-				RxPacket[1] = 0 ;			
+				RxPacket[1] = 0 ;
 				RxCount = 0 ;
 				RxLastCount = 0 ;
 				SendCount = 2 ;
@@ -1418,13 +1211,13 @@ void menuUp1(uint8_t event)
 	uint32_t i ;
 	uint32_t width ;
 	struct t_maintenance *mdata = &SharedMemory.Mdata ;
-   
+
 	wdt_reset() ;
 	if ( WatchdogTimeout < 50 )
 	{
  		WatchdogTimeout = 50 ;
 	}
-	 
+
 	if (mdata->UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
 	{
   	TITLE( "UPDATE BOOT" ) ;
@@ -1451,7 +1244,7 @@ void menuUp1(uint8_t event)
   		TITLE( "UPDATE AVR" ) ;
 		}
 #endif
-		
+
 #ifdef PCBX9D
 		if (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT )
 		{
@@ -1513,7 +1306,7 @@ void menuUp1(uint8_t event)
 			{
 #if defined(PCBTARANIS)
   			fr = f_mount(0, &g_FATFS) ;
-#else				
+#else
   			fr = f_mount(0, &g_FATFS) ;
 #endif
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
@@ -1574,12 +1367,12 @@ void menuUp1(uint8_t event)
 				}
 			}
     break ;
-    
+
 		case EVT_KEY_LONG(BTN_RE) :
 			if ( g_eeGeneral.disableBtnLong )
 			{
 				break ;
-			}		
+			}
 		case EVT_KEY_FIRST(KEY_EXIT):
 			if ( state < UPDATE_ACTION )
 			{
@@ -1595,7 +1388,7 @@ void menuUp1(uint8_t event)
 			lcd_puts_Pleft( 4*FH, "\005No Files" ) ;
 	    lcd_outdez( 21*FW, 4*FH, mounted ) ;
     break ;
-		
+
 		case UPDATE_FILE_LIST :
 			mdata->SportVerValid = 0 ;
 			if ( fileList( event, &FileControl ) == 1 )
@@ -1730,7 +1523,7 @@ void menuUp1(uint8_t event)
 					if ( g_eeGeneral.disableBtnLong )
 					{
 						break ;
- 					}		
+ 					}
     		case EVT_KEY_LONG(KEY_EXIT):
 					state = UPDATE_FILE_LIST ;		// Canceled
     		break;
@@ -1870,7 +1663,7 @@ void menuUp1(uint8_t event)
 						BlockOffset += 64 ;		// 32-bit words (256 bytes)
 						firmwareAddress += 256 ;
 						BytesFlashed += 256 ;
-					}	 
+					}
 				}
 				else
 				{
@@ -1907,7 +1700,7 @@ void menuUp1(uint8_t event)
 //						number = ByteEnd - BytesFlashed ;
 //						if ( number > 128 )
 //						{
-//							number = 128 ;						
+//							number = 128 ;
 //						}
 //						i = write_CoProc( (uint32_t)firmwareAddress, &FileData[BlockOffset], number ) ;
 //						BlockOffset += 128 ;		// 8-bit bytes
@@ -1951,7 +1744,7 @@ void menuUp1(uint8_t event)
 			}
  #endif
 #endif
-			
+
 #ifdef PCB9XT
 			else if (mdata->UpdateItem == UPDATE_TYPE_AVR )
 			{
@@ -2040,7 +1833,7 @@ void menuUp1(uint8_t event)
 					mdata->SportVerValid = 0x00FF ; // Abort with failed
 					mdata->SportState = SPORT_IDLE ;
 				}
-			}	
+			}
 			lcd_hline( 0, 5*FH-1, 65 ) ;
 			lcd_hline( 0, 6*FH, 65 ) ;
 			lcd_vline( 64, 5*FH, 8 ) ;
@@ -2051,7 +1844,7 @@ void menuUp1(uint8_t event)
 //			lcd_outhex4( 0, 4*FH, BytesFlashed >> 16 ) ;
 //			lcd_outhex4( 30, 4*FH, BytesFlashed  ) ;
     break ;
-		
+
 		case UPDATE_COMPLETE :
 			lcd_puts_Pleft( 3*FH, "Flashing Complete" ) ;
  			if ( (mdata->UpdateItem != UPDATE_TYPE_BOOTLOADER ) )
@@ -2095,7 +1888,7 @@ void menuUp1(uint8_t event)
 //				}
 //				else
 				{
- #endif 			
+ #endif
  					if ( mdata->SportVerValid & 1 )
 	 				{
  						lcd_puts_Pleft( 5*FH, "FAILED" ) ;
@@ -2109,8 +1902,8 @@ void menuUp1(uint8_t event)
 	#endif
   #ifndef REVX
 			  }
-  #endif 			
- #endif 			
+  #endif
+ #endif
 			}
 #ifdef PCB9XT
 				displayXmegaData() ;
@@ -2198,14 +1991,14 @@ void menuUpdate(uint8_t event)
     case EVT_ENTRY:
 			position = 2*FH ;
     break ;
-    
+
 		case EVT_KEY_FIRST(KEY_MENU):
 //#ifdef PCBX7
 		case EVT_KEY_BREAK(BTN_RE):
 //#endif
 			if ( position == 2*FH )
 			{
-				
+
 				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_BOOTLOADER ;
 	      chainMenu(menuUp1) ;
 			}
@@ -2403,28 +2196,28 @@ void menuUpdate(uint8_t event)
 	 #endif
 	#endif
 			{
-				position += FH ;				
+				position += FH ;
 			}
 		break ;
-    
+
 		case EVT_KEY_FIRST(KEY_UP):
 			if ( position > 2*FH )
 			{
-				position -= FH ;				
+				position -= FH ;
 			}
 		break ;
  #else
     case EVT_KEY_FIRST(KEY_DOWN):
 			if ( position < 6*FH )
 			{
-				position += FH ;				
+				position += FH ;
 			}
 		break ;
-    
+
 		case EVT_KEY_FIRST(KEY_UP):
 			if ( position > 2*FH )
 			{
-				position -= FH ;				
+				position -= FH ;
 			}
 		break ;
  #endif
@@ -2437,14 +2230,14 @@ void menuUpdate(uint8_t event)
 			if ( position < 7*FH )
 #endif
 			{
-				position += FH ;				
+				position += FH ;
 			}
 		break ;
-    
+
 		case EVT_KEY_FIRST(KEY_UP):
 			if ( position > 2*FH )
 			{
-				position -= FH ;				
+				position -= FH ;
 			}
 		break ;
 #endif
@@ -2453,14 +2246,14 @@ void menuUpdate(uint8_t event)
 //			if ( position < 4*FH )
 			if ( position < 7*FH )
 			{
-				position += FH ;				
+				position += FH ;
 			}
 		break ;
-    
+
 		case EVT_KEY_FIRST(KEY_UP):
 			if ( position > 2*FH )
 			{
-				position -= FH ;				
+				position -= FH ;
 			}
 		break ;
 #endif
@@ -2469,14 +2262,14 @@ void menuUpdate(uint8_t event)
 //			if ( position < 4*FH )
 			if ( position < 5*FH )
 			{
-				position += FH ;				
+				position += FH ;
 			}
 		break ;
-    
+
 		case EVT_KEY_FIRST(KEY_UP):
 			if ( position > 2*FH )
 			{
-				position -= FH ;				
+				position -= FH ;
 			}
 		break ;
 #endif
@@ -2504,9 +2297,9 @@ void init_mtwi()
 {
 	register Pio *pioptr ;
 	register uint32_t timing ;
-  
+
 	PMC->PMC_PCER0 |= 0x00080000L ;		// Enable peripheral clock to TWI0
-	
+
 	TWI0->TWI_CR = TWI_CR_SWRST ;				// Reset in case we are restarting
 
 	/* Configure PIO */
@@ -2514,7 +2307,7 @@ void init_mtwi()
   pioptr->PIO_ABCDSR[0] &= ~0x00000018 ;	// Peripheral A
   pioptr->PIO_ABCDSR[1] &= ~0x00000018 ;	// Peripheral A
   pioptr->PIO_PDR = 0x00000018 ;					// Assign to peripheral
-	
+
 	timing = 64000000 * 5 / 1500000 ;		// 5uS high and low 100kHz, trying 200 kHz
 	timing += 15 - 4 ;
 	timing /= 16 ;
@@ -2524,7 +2317,7 @@ void init_mtwi()
 	TWI0->TWI_CR = TWI_CR_MSEN | TWI_CR_SVDIS ;		// Master mode enable
 #ifdef REVX
 	TWI0->TWI_MMR = 0x006F0100 ;		// Device 6F and master is writing, 1 byte addr
-#else	
+#else
 	TWI0->TWI_MMR = 0x00350000 ;		// Device 35 and master is writing
 #endif
 }
@@ -2533,7 +2326,7 @@ void init_mtwi()
 uint32_t clearMfp()
 {
 	uint32_t i ;
-	
+
 	TWI0->TWI_MMR = 0x006F0100 ;		// Device 6F and master is writing, 1 byte addr
 	TWI0->TWI_IADR = 7 ;
 	TWI0->TWI_THR = 0 ;					// Value for clear
@@ -2543,9 +2336,9 @@ uint32_t clearMfp()
 		if ( TWI0->TWI_SR & TWI_SR_TXCOMP )
 		{
 			break ;
-		}	
+		}
 	}
-	
+
 	if ( i >= 100000 )
 	{
 		return 0 ;
@@ -2561,7 +2354,7 @@ uint32_t clearMfp()
 //uint32_t read_status_CoProc( uint32_t bufaddr, uint32_t number )
 //{
 //	uint32_t i ;
-	
+
 //	TWI0->TWI_MMR = 0x00351000 ;		// Device 35 and master is reading,
 //	TWI0->TWI_RPR = bufaddr ;
 //	TWI0->TWI_RCR = number-1 ;
@@ -2571,9 +2364,9 @@ uint32_t clearMfp()
 //	}
 //	TWI0->TWI_PTCR = TWI_PTCR_RXTEN ;	// Start transfers
 //	TWI0->TWI_CR = TWI_CR_START ;		// Start Rx
-	
+
 //	// Now wait for completion
-	
+
 //	for ( i = 0 ; i < 1000000 ; i += 1 )
 //	{
 //		if ( TWI0->TWI_SR & TWI_SR_RXBUFF )
@@ -2591,13 +2384,13 @@ uint32_t clearMfp()
 //		return 0 ;
 //	}
 //	// Now wait for completion
-	
+
 //	for ( i = 0 ; i < 100000 ; i += 1 )
 //	{
 //		if ( TWI0->TWI_SR & TWI_SR_TXCOMP )
 //		{
 //			break ;
-//		}	
+//		}
 //	}
 //	if ( i >= 100000 )
 //	{
@@ -2611,7 +2404,7 @@ uint32_t clearMfp()
 //uint32_t coProcBoot()
 //{
 //	uint32_t i ;
-	
+
 //	TWI0->TWI_MMR = 0x00350000 ;		// Device 35 and master is writing
 //	TWI0->TWI_THR = TWI_CMD_REBOOT ;	// Send reboot command
 //	TWI0->TWI_CR = TWI_CR_STOP ;		// Stop Tx
@@ -2621,9 +2414,9 @@ uint32_t clearMfp()
 //		if ( TWI0->TWI_SR & TWI_SR_TXCOMP )
 //		{
 //			break ;
-//		}	
+//		}
 //	}
-	
+
 //	if ( i >= 100000 )
 //	{
 //		return 0 ;
@@ -2643,26 +2436,26 @@ uint32_t clearMfp()
 //	// Copy data
 //	for ( i = 0 ; i < number ; i += 1 )
 //	{
-//		Addr_buffer[i+3] = *ptr++ ;		
+//		Addr_buffer[i+3] = *ptr++ ;
 //	}
 //	// Pad to 128 bytes
 //	while ( i < 128 )
 //	{
 //		Addr_buffer[i+3] = 0xFF ;
-//		i += 1 ;	
+//		i += 1 ;
 //	}
 //	// Now send TWI data using PDC
 //	TWI0->TWI_MMR = 0x00350000 ;		// Device 35 and master is writing
 //	// init PDC
 //	TWI0->TWI_TPR = (uint32_t)&Addr_buffer[1] ;
 //	TWI0->TWI_TCR = 130 ;
-			
+
 //	TWI0->TWI_THR = Addr_buffer[0] ;		// Send data
 //	// kick off PDC, enable PDC end interrupt
 //	TWI0->TWI_PTCR = TWI_PTCR_TXTEN ;	// Start transfers
-	
+
 //	// Now wait for completion
-	
+
 //	for ( i = 0 ; i < 1000000 ; i += 1 )
 //	{
 //		if ( TWI0->TWI_SR & TWI_SR_TXBUFE )
@@ -2677,15 +2470,15 @@ uint32_t clearMfp()
 //	{
 //		return 0 ;
 //	}
-	
+
 //	for ( i = 0 ; i < 100000 ; i += 1 )
 //	{
 //		if ( TWI0->TWI_SR & TWI_SR_TXCOMP )
 //		{
 //			break ;
-//		}	
+//		}
 //	}
-	
+
 //	if ( i >= 100000 )
 //	{
 //		return 0 ;
@@ -2728,7 +2521,7 @@ uint32_t clearMfp()
 //				else
 //				{
 //   		  	result = 3 ;
-//				}	 
+//				}
 //			}
 //		}
 //	}
@@ -2828,7 +2621,7 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 					SharedMemory.Mdata.SportState = SPORT_VERSION ;
 				}
 			break ;
-        
+
 			case PRIM_ACK_VERSION:
 				if ( SharedMemory.Mdata.SportState == SPORT_VERSION )
 				{
@@ -2846,7 +2639,7 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 			{
 				UINT bcount ;
 				bcount = SharedMemory.Mdata.BlockInUse ? SharedMemory.Mdata.XblockCount : SharedMemory.Mdata.BlockCount ;
-				
+
 				if ( BytesFlashed >= FirmwareSize )
 				{
 					// We have finished
@@ -2858,7 +2651,7 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 					SharedMemory.Mdata.SportState = SPORT_END ;
 				}
 				else
-				{				
+				{
 					if ( bcount )
 					{
 						uint32_t *ptr ;
@@ -2889,7 +2682,7 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 						SharedMemory.Mdata.SportState = SPORT_DATA_READ ;
 						if ( SharedMemory.Mdata.BlockInUse )
 						{
-							SharedMemory.Mdata.BlockInUse = 0 ;						
+							SharedMemory.Mdata.BlockInUse = 0 ;
 						}
 						else
 						{
@@ -2903,7 +2696,7 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 			case PRIM_END_DOWNLOAD :
 					SharedMemory.Mdata.SportState = SPORT_COMPLETE ;
 			break ;
-				
+
 			case PRIM_DATA_CRC_ERR :
 					SharedMemory.Mdata.SportState = SPORT_FAIL ;
 			break ;
@@ -2954,7 +2747,7 @@ uint32_t hexFileNextByte()
 	{
 		if ( SharedMemory.Mdata.XblockCount < 1024 )
 		{
-			
+
 			return 0 ;
 		}
 		f_read( &SharedMemory.Mdata.FlashFile, (BYTE *)ExtraFileData, 1024, &SharedMemory.Mdata.XblockCount ) ;
@@ -3023,7 +2816,7 @@ void hexFileReadRecord()
 						state = RECORD_LENGTH1 ;
 					}
 				break ;
-			
+
 				case RECORD_LENGTH1 :
 					length = fromHex( data ) ;
 					state = RECORD_LENGTH2 ;
@@ -3083,7 +2876,7 @@ void hexFileReadRecord()
 
 void hexFileStart()
 {
-	
+
 	recordSize = 0 ;
 	inRecord = 0 ;
 	SharedMemory.Mdata.HexFileIndex = 0 ;
@@ -3095,7 +2888,7 @@ void hexFileStart()
 // Read file data to ExtraFileData, put binary into FileData
 void hexFileRead1024( uint32_t address, UINT *blockCount )
 {
-	
+
 	uint32_t i ;
 	i = 0 ;
 	while ( i < 1024 )
@@ -3160,7 +2953,7 @@ uint32_t multiUpdate()
 		break ;
 
 		case MULTI_WAIT2 :
-		{	
+		{
 			uint16_t rxchar ;
 			while ( ( rxchar = getMultiFifo() ) != 0xFFFF )
 			{
@@ -3241,7 +3034,7 @@ uint32_t multiUpdate()
 		break ;
 
 		case MULTI_FLASHING :
-		{	
+		{
 			uint16_t rxchar ;
 			uint32_t addOffset ;
 			sendMultiByte( 0x55 ) ;
@@ -3299,7 +3092,7 @@ uint32_t multiUpdate()
 				MultiState = MULTI_DONE ;
 				break ;
 			}
-			
+
 			BytesFlashed += MultiPageSize ;
 			BlockOffset += MultiPageSize ;
 			if ( BytesFlashed >= ByteEnd )
@@ -3347,7 +3140,7 @@ uint32_t multiUpdate()
 //#endif
 			SharedMemory.Mdata.HexFileRead = BytesFlashed = FirmwareSize + 1 ;
 		break ;
-	
+
 	}
 	return MultiType ? SharedMemory.Mdata.HexFileRead : BytesFlashed ;
 }
@@ -3358,7 +3151,7 @@ uint32_t multiUpdate()
  #ifndef SMALL
 uint32_t xmegaUpdate()
 {
-	
+
 	switch ( XmegaState )
 	{
 		case XMEGA_IDLE :
@@ -3369,7 +3162,7 @@ uint32_t xmegaUpdate()
 		  AllSubState = 0 ;
 			XmegaState = XMEGA_POWER ;
 		break ;
-		
+
 		case XMEGA_POWER :
 			BytesFlashed = 0 ;
 			if ( ++AllSubState > 5 )
@@ -3378,7 +3171,7 @@ uint32_t xmegaUpdate()
 				XmegaState = XMEGA_BEGIN ;
 			}
 		break ;
-		
+
 		case XMEGA_BEGIN :
 			__disable_irq() ;
 			pdiInit() ;
@@ -3414,10 +3207,10 @@ uint32_t xmegaUpdate()
 				XmegaState = XMEGA_DONE ;
 			}
 		break ;
-		
+
 		case XMEGA_FLASHING :
 		  AllSubState += 1 ;
-			
+
 			if ( ( AllSubState & 3 ) == 0 )
 			{
 				__disable_irq() ;
@@ -3441,7 +3234,7 @@ uint32_t xmegaUpdate()
 				}
 			}
 		break ;
-		
+
 		case XMEGA_DONE :
 			pdiCleanup() ;
 			XmegaState = XMEGA_IDLE ;
@@ -3452,7 +3245,7 @@ uint32_t xmegaUpdate()
 		break ;
 	}
 	return BytesFlashed ;
-}	
+}
  #endif
 #endif
 
@@ -3468,7 +3261,7 @@ uint32_t sportUpdate( uint32_t external )
 		case SPORT_IDLE :
 			SportTimer = 0 ;
 		break ;
-		
+
 		case SPORT_START :
 #if !defined(PCBTARANIS)
 			 FrskyTelemetryType = FRSKY_TEL_SPORT ;
@@ -3536,7 +3329,7 @@ uint32_t sportUpdate( uint32_t external )
 #endif
 			SharedMemory.Mdata.SportState = SPORT_POWER_ON ;
 		break ;
-		
+
 		case SPORT_POWER_ON :
 			if ( SportTimer == 0 )
 			{
@@ -3547,7 +3340,7 @@ uint32_t sportUpdate( uint32_t external )
 				writePacket( TxPacket, 0xFF ) ;
 			}
 		break ;
-		
+
 		case SPORT_VERSION :
 			if ( SportTimer == 0 )
 			{
@@ -3579,9 +3372,9 @@ uint32_t sportUpdate( uint32_t external )
 			}
 #endif
 		break ;
-		
+
 		case SPORT_DATA_READ :
-		{	
+		{
 			uint32_t *ptr ;
 			UINT *pcount ;
 			ptr = ( uint32_t *) (SharedMemory.Mdata.BlockInUse ? FileData : ExtraFileData ) ;
@@ -3590,14 +3383,14 @@ uint32_t sportUpdate( uint32_t external )
 			SharedMemory.Mdata.SportState = SPORT_DATA ;
 		}
 		break ;
-		
+
 		case SPORT_END :
 		break ;
 
 		case SPORT_COMPLETE :
 			return 0xFFFFFFFE ;
 		break ;
-				
+
 		case SPORT_FAIL :
 			return 0xFFFFFFFF ;
 		break ;
@@ -3623,7 +3416,7 @@ void maintenanceBackground()
 	}
 	else
 #endif
-	{	
+	{
 		uint16_t rxchar ;
 		while ( ( rxchar = rxTelemetry() ) != 0xFFFF )
 		{
@@ -3631,7 +3424,7 @@ void maintenanceBackground()
 		}
 	}
 #endif
-		
+
 #ifdef PCBSKY
 	uint16_t rxchar ;
 	while ( ( rxchar = get_fifo128( &Com1_fifo ) ) != 0xFFFF )
@@ -3650,7 +3443,7 @@ extern void processSerialData(uint8_t data) ;
     processSerialData(data);
 	}
 #endif
-	 
+
 }
 
 /* CRC16 implementation acording to CCITT standards */
@@ -3710,4 +3503,3 @@ uint16_t crc16_ccitt( uint8_t *buf, uint32_t len )
 	}
 	return crc;
 }
-

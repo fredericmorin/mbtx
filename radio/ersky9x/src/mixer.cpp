@@ -30,14 +30,12 @@
 
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 #ifdef REV9E
-const uint8_t switchIndex[18] = { HSW_SA0, HSW_SB0, HSW_SC0, HSW_SD0, HSW_SE0, HSW_SF2, HSW_SG0, HSW_SH2, HSW_SI0, 
+const uint8_t switchIndex[18] = { HSW_SA0, HSW_SB0, HSW_SC0, HSW_SD0, HSW_SE0, HSW_SF2, HSW_SG0, HSW_SH2, HSW_SI0,
 																 HSW_SJ0, HSW_SK0, HSW_SL0, HSW_SM0, HSW_SN0, HSW_SO0, HSW_SP0, HSW_SQ0, HSW_SR0, } ;
 #else
 const uint8_t switchIndex[8] = { HSW_SA0, HSW_SB0, HSW_SC0, HSW_SD0, HSW_SE0, HSW_SF2, HSW_SG0, HSW_SH2 } ;
 #endif	// REV9E
 #endif
-
-//#define LATENCY 1
 
 extern SKYMixData *mixAddress( uint32_t index ) ;
 
@@ -82,7 +80,7 @@ void trace()   // called in perOut - once every 0.01sec
     timer(val);
 
   val = (val+RESX) / (RESX/16); //calibrate it
-  
+
 	static uint16_t s_time;
   static uint16_t s_cnt;
   static uint16_t s_sum;
@@ -91,7 +89,7 @@ void trace()   // called in perOut - once every 0.01sec
   if((uint16_t)( get_tmr10ms()-s_time)<1000) //10 sec
       return;
   s_time= get_tmr10ms() ;
- 
+
 #ifdef PCBSKY
   if ((g_model.Module[1].protocol==PROTO_DSM2)&&getSwitch00(MAX_SKYDRSWITCH-1) ) audioDefevent(AU_TADA);   //DSM2 bind mode warning
 #endif
@@ -144,7 +142,7 @@ static void inactivityCheck()
   	  if( InacCounter >((uint16_t)(g_eeGeneral.inactivityTimer+10)*(100*60/16)))
       if( ( InacCounter & 0x1F ) == 1 )
 			{
-				SystemOptions &= ~SYS_OPT_MUTE ;						
+				SystemOptions &= ~SYS_OPT_MUTE ;
 				putVoiceQueue( VOLUME_MASK + g_eeGeneral.inactivityVolume + ( NUM_VOL_LEVELS-3 ) ) ;
 				voiceSystemNameNumberAudio( SV_INACTV, V_INACTIVE, AU_INACTIVITY ) ;
 				putVoiceQueue( 0xFFFF ) ;
@@ -167,25 +165,19 @@ static void inactivityCheck()
 //}
 //#endif
 
-void perOutPhase( int16_t *chanOut, uint8_t att ) 
+void perOutPhase( int16_t *chanOut, uint8_t att )
 {
 	static uint8_t lastPhase ;
 	uint8_t thisPhase ;
 	struct t_fade *pFade ;
 	pFade = &Fade ;
 
-//#ifdef PCBX9D
-// #ifdef LATENCY
-//	GPIOA->ODR |= 0x4000 ;
-// #endif	
-//#endif
-
 	thisPhase = getFlightPhase() ;
 	if ( thisPhase != lastPhase )
 	{
 		uint8_t time1 = 0 ;
 		uint8_t time2 ;
-		
+
 		if ( lastPhase )
 		{
       time1 = g_model.phaseData[(uint8_t)(lastPhase-1)].fadeOut ;
@@ -219,11 +211,11 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 					CurrentPhase = p ;
 					pFade->fadeWeight += pFade->fadeScale[p] ;
 					perOut( chanOut, att ) ;
-					att &= ~FADE_FIRST ;				
+					att &= ~FADE_FIRST ;
 				}
 			}
 			fadeMask <<= 1 ;
-		}	
+		}
 	}
 	else
 	{
@@ -232,14 +224,14 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 	pFade->fadeWeight += pFade->fadeScale[thisPhase] ;
 	CurrentPhase = thisPhase ;
 	perOut( chanOut, att | FADE_LAST ) ;
-	
+
 	if ( pFade->fadePhases && tick10ms )
 	{
 		uint8_t fadeMask = 1 ;
     for (uint8_t p=0; p<MAX_MODES+1; p+=1)
 		{
 			uint16_t l_fadeScale = pFade->fadeScale[p] ;
-			
+
 			if ( pFade->fadePhases & fadeMask )
 			{
 				uint16_t x = pFade->fadeRate * tick10ms ;
@@ -252,7 +244,7 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 					else
 					{
 						l_fadeScale = 0 ;
-						pFade->fadePhases &= ~fadeMask ;						
+						pFade->fadePhases &= ~fadeMask ;
 					}
 				}
 				else
@@ -264,7 +256,7 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 					else
 					{
 						l_fadeScale = 25600 ;
-						pFade->fadePhases &= ~fadeMask ;						
+						pFade->fadePhases &= ~fadeMask ;
 					}
 				}
 			}
@@ -276,11 +268,6 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 			fadeMask <<= 1 ;
 		}
 	}
-//#ifdef PCBX9D
-// #ifdef LATENCY
-//	GPIOA->ODR &= ~0x4000 ;
-// #endif	
-//#endif
 }
 
 
@@ -353,7 +340,7 @@ int16_t scaleAnalog( int16_t v, uint8_t channel )
 //	}
 //#endif
 	v  =  v * (int32_t)RESX /  (max((int16_t)100,(v>0 ? pos : neg ) ) ) ;
-	
+
 #endif // SIMU
 	if(v <= -RESX) v = -RESX;
 	if(v >=  RESX) v =  RESX;
@@ -377,16 +364,8 @@ void perOut(int16_t *chanOut, uint8_t att )
 		if ( check_soft_power() == POWER_TRAINER )		// On trainer power
 		{
 			TrainerChannel *tChan = &g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[0] ;
-			
-#ifdef PCBX9D
-#ifdef PCBX7
-			if ( ( tChan->source != TRAINER_SBUS ) && ( tChan->source != TRAINER_CPPM ) && ( tChan->source != TRAINER_BT ) )
-#else
+
 			if ( ( tChan->source != TRAINER_SBUS ) && ( tChan->source != TRAINER_CPPM ) )
-#endif			
-#else
-			if ( ( tChan->source != TRAINER_BT ) && ( tChan->source != TRAINER_COM2 ) )
-#endif
 			{
 				att |= NO_TRAINER ;
 			}
@@ -397,11 +376,7 @@ void perOut(int16_t *chanOut, uint8_t att )
         ail_stick = 3 ; //AIL_STICK ;
 
 				uint8_t stickIndex = g_eeGeneral.stickMode*4 ;
-#ifdef PCBX7
-        for( uint8_t i = 0 ; i < 6+NumExtraPots ; i += 1 ) // calc Sticks
-#else
         for( uint8_t i = 0 ; i < 7+NumExtraPots ; i += 1 ) // calc Sticks
-#endif
 				{
             //Normalization  [0..2048] ->   [-1024..1024]
 					int16_t v = anaIn( i ) ;
@@ -451,10 +426,10 @@ void perOut(int16_t *chanOut, uint8_t att )
 											{
 												trainerThrottleValue = vStud ;
 												trainerThrottleValid = 1 ;
-											}												 
+											}
 										}
 									}
-									
+
                 }
 
 
@@ -647,11 +622,11 @@ void perOut(int16_t *chanOut, uint8_t att )
 				{
 					if ( md->extWeight == 1 )
 					{
-						lweight += 125 ; 
+						lweight += 125 ;
 					}
 					else if ( md->extWeight == 3 )
 					{
-						lweight -= 125 ; 
+						lweight -= 125 ;
 					}
 					else if ( md->extWeight == 2 )
 					{
@@ -675,11 +650,11 @@ void perOut(int16_t *chanOut, uint8_t att )
 				{
 					if ( md->extOffset == 1 )
 					{
-						loffset += 125 ; 
+						loffset += 125 ;
 					}
 					else if ( md->extOffset == 3 )
 					{
-						loffset -= 125 ; 
+						loffset -= 125 ;
 					}
 					else if ( md->extOffset == 2 )
 					{
@@ -701,22 +676,22 @@ void perOut(int16_t *chanOut, uint8_t att )
         int16_t v  = 0;
         uint8_t swTog;
         uint8_t swon = swOn[i] ;
-				
+
 				bool t_switch = getSwitch(md->swtch,1) ;
         if (md->swtch && (md->srcRaw > PPM_BASE) && (md->srcRaw <= PPM_BASE+NUM_PPM) && (ppmInValid == 0) )
 				{
-					// then treat switch as false ???				
+					// then treat switch as false ???
 					t_switch = 0 ;
-				}	
+				}
         if (md->swtch && (md->srcRaw > MIX_3POS+MAX_GVARS + NUM_SCALERS ) && (ppmInValid == 0) )
 				{ // Extra PPM inputs (9-16)
 					if (md->srcRaw <= MIX_3POS+MAX_GVARS + NUM_SCALERS + NUM_EXTRA_PPM )
 					{
-						// then treat switch as false ???				
+						// then treat switch as false ???
 						t_switch = 0 ;
 					}
 				}
-      
+
         if ( t_switch )
 				{
 					if ( md->modeControl & ( 1 << CurrentPhase ) )
@@ -916,14 +891,14 @@ void perOut(int16_t *chanOut, uint8_t att )
 							if ( my_delay == 0 )
 							{
         				if (md->delayUp || md->delayDown)  // there are delay values
-								{								
+								{
 									swTog = 1 ;
 								}
 							}
 						}
 						else
 						{
-							my_delay = 0 ;							
+							my_delay = 0 ;
 						}
 
             if(swTog) {
@@ -976,7 +951,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 										}
 										else
 										{
-											rate = -rate ;											
+											rate = -rate ;
 											speed = md->speedDown ;
 										}
 										tact = (speed) ? tact+(rate)/((int16_t)10*speed) : (int32_t)v*DEL_MULT ;
@@ -1065,7 +1040,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 									if ( idx < 0 )
 									{
 										v = -v ;
-										idx = 6 - idx ;								
+										idx = 6 - idx ;
 									}
         		    	v = intpol(v, idx - 7);
 								}
@@ -1103,13 +1078,13 @@ void perOut(int16_t *chanOut, uint8_t att )
 				}
         //========== MULTIPLEX ===============
         int32_t dv = (int32_t)v*mixweight ;
-				
+
         //========== lateOffset ===============
 				if ( md->lateOffset )
         {
             if(mixoffset) dv += calc100toRESX( mixoffset ) * 100 ;
         }
-				
+
 				int32_t *ptr ;			// Save calculating address several times
 				ptr = &chans[md->destCh-1] ;
         switch((uint8_t)md->mltpx){
@@ -1138,7 +1113,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 
         if(mixWarning & 1) if(((tmr10ms&0xFF)==  0)) audioDefevent(AU_MIX_WARNING_1);
         if(mixWarning & 2) if(((tmr10ms&0xFF)== 64) || ((tmr10ms&0xFF)== 72)) audioDefevent(AU_MIX_WARNING_2);
-        if(mixWarning & 4) if(((tmr10ms&0xFF)==128) || ((tmr10ms&0xFF)==136) || ((tmr10ms&0xFF)==144)) audioDefevent(AU_MIX_WARNING_3);        
+        if(mixWarning & 4) if(((tmr10ms&0xFF)==128) || ((tmr10ms&0xFF)==136) || ((tmr10ms&0xFF)==144)) audioDefevent(AU_MIX_WARNING_3);
 
 
     }
@@ -1164,7 +1139,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 					}
 					l_fade += ( q / 100 ) * Fade.fadeScale[CurrentPhase] ;
 					Fade.fade[i] = l_fade ;
-			
+
 					if ( ( att & FADE_LAST ) == 0 )
 					{
 						continue ;
@@ -1173,7 +1148,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 					q = l_fade * 100 ;
 				}
     	  chans[i] = q / 100 ; // chans back to -1024..1024
-        
+
 				ex_chans[i] = chans[i]; //for getswitch
 
         LimitData *limit = &g_model.limitData[i] ;
@@ -1182,7 +1157,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 				{
 					limit = &g_model.elimitData[i-NUM_SKYCHNOUT] ;
 				}
-#endif			
+#endif
 				int16_t ofs = limit->offset;
 				int16_t xofs = ofs ;
 				if ( xofs > g_model.sub_trim_limit )
@@ -1228,7 +1203,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 								static uint32_t sticky = 0 ;
 								uint8_t applySafety = 0 ;
 								int8_t sSwitch = g_model.safetySw[i].opt.ss.swtch ;
-								
+
 								if(getSwitch00( sSwitch))
 								{
 									applySafety = 1 ;
@@ -1253,7 +1228,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 											rev_thr = 1 ;
 											thr = -thr + 3 ;
 										}
-									}	
+									}
 									// Special case, sticky throttle
 									if( applySafety )
 									{
@@ -1286,7 +1261,7 @@ void perOut(int16_t *chanOut, uint8_t att )
   											}
 											}
 										}
-										
+
 										if ( throttleOK )
 										{
 											if ( trainerThrottleValid )
@@ -1295,7 +1270,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 												{
 													sticky |= (1<<i) ;
 												}
-											}	
+											}
 											else
 											{
 												sticky |= (1<<i) ;
@@ -1320,6 +1295,3 @@ void perOut(int16_t *chanOut, uint8_t att )
         chanOut[i] = q; //copy consistent word to int-level
 		}
 }
-
-
-

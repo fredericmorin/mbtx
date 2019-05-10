@@ -45,8 +45,6 @@
 #endif
 #endif
 
-//#define LATENCY 1
-
 #include "ersky9x.h"
 #include "myeeprom.h"
 #include "audio.h"
@@ -1364,9 +1362,6 @@ extern uint8_t ModelImageValid ;
 
 	while (1)
 	{
-
-#if (not defined(REVA)) || defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
-
 		if ( ( check_soft_power() == POWER_OFF ) )		// power now off
 		{
 			if ( checkRssi() == RSSI_STAY_ON )
@@ -1377,16 +1372,13 @@ extern uint8_t ModelImageValid ;
 			putSystemVoice( SV_SHUTDOWN, AU_TADA ) ;
 			lcd_clear() ;
 			lcd_puts_P( 4*FW + X12OFFSET, 3*FH, PSTR(STR_SHUT_DOWN) ) ;
-
 			refreshDisplay() ;
 
 			// Wait for OK to turn off
 			// Currently wait 1 sec, needs to check eeprom finished
-
 			prepareForShutdown() ;
-#ifdef stm32f205
 			disableRtcBattery() ;
-#endif
+
   		uint16_t tgtime = get_tmr10ms() ;
   		uint16_t long_tgtime = tgtime ;
 			uint32_t saved = 0 ;
@@ -1418,19 +1410,16 @@ extern uint8_t ModelImageValid ;
 					lcd_putsn_P( 5*FW + X12OFFSET, 5*FH, "           ", 11 ) ;
  					tgtime = get_tmr10ms() ;
 				}
-
 				refreshDisplay() ;
   		}
 
 
 				lcd_clear() ;
 				lcd_putsn_P( 6*FW, 3*FH, "POWER OFF", 9 ) ;
-
 				refreshDisplay() ;
 
 				soft_power_off() ;		// Only turn power off if necessary
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 				for(;;)
 				{
 					wdt_reset() ;
@@ -1442,29 +1431,17 @@ extern uint8_t ModelImageValid ;
   				/* Request Wait For Event */
   				__WFE();
 				}
-#endif // PCBX9D
-
-//			}
 		}
-#endif
 		mainSequence( MENUS ) ;
-#ifndef SIMU
 //		CoTickDelay(2) ;					// 4mS for now
 		CoTickDelay(1) ;					// 2mS for now
-#endif
 	}
-
 }
 
 
 uint16_t getTmr2MHz()
 {
-#ifdef PCBSKY
-	return TC1->TC_CHANNEL[0].TC_CV ;
-#endif
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 	return TIM7->CNT ;
-#endif
 }
 
 uint32_t OneSecTimer ;
@@ -3923,78 +3900,22 @@ int8_t getGvarSourceValue( uint8_t src )
 	{
 		value = calibratedStick[ src-5 - 1 ] / 8 ;
 	}
-#if defined(PCBSKY) || defined(PCB9XT)
-	else if ( src <= 12 )	// Pot
-#endif
-#ifdef PCBX9D
 	else if ( src <= 13 )	// Pot
-#endif
-#if defined(PCBX12D) || defined(PCBX10)
-	else if ( src <= 13 )	// Pot
-#endif
 	{
 		value = calibratedStick[ ( src-6)] / 8 ;
 	}
-#if defined(PCBSKY) || defined(PCB9XT)
-	else if ( src <= 36 )	// Chans
-#endif
-#ifdef PCBX9D
 	else if ( src <= 37 )	// Pot
-#endif
-#if defined(PCBX12D) || defined(PCBX10)
-	else if ( src <= 37 )	// Pot
-#endif
 	{
-#if defined(PCBSKY) || defined(PCB9XT)
-		value = ex_chans[src-13] * 100 / 1024 ;
-#endif
-#ifdef PCBX9D
 		value = ex_chans[src-14] * 100 / 1024 ;
-#endif
-#if defined(PCBX12D) || defined(PCBX10)
-		value = ex_chans[src-14] * 100 / 1024 ;
-#endif
 	}
-#if defined(PCBSKY) || defined(PCB9XT)
-	else if ( src <= 44 )	// Scalers
-#endif
-#ifdef PCBX9D
 	else if ( src <= 45 )	// Scalers
-#endif
-#if defined(PCBX12D) || defined(PCBX10)
-	else if ( src <= 45 )	// Scalers
-#endif
 	{
-#if defined(PCBSKY) || defined(PCB9XT)
-		value = calc_scaler( src-37, 0, 0 ) ;
-#endif
-#ifdef PCBX9D
 		value = calc_scaler( src-38, 0, 0 ) ;
-#endif
-#if defined(PCBX12D) || defined(PCBX10)
-		value = calc_scaler( src-38, 0, 0 ) ;
-#endif
 	}
-#if defined(PCBSKY) || defined(PCB9XT)
-	else if ( src <= 68 )	// Scalers
-#endif
-#ifdef PCBX9D
 	else if ( src <= 69 )	// Scalers
-#endif
-#if defined(PCBX12D) || defined(PCBX10)
-	else if ( src <= 69 )	// Scalers
-#endif
 	{ // Outputs
 		int32_t x ;
-#if defined(PCBSKY) || defined(PCB9XT)
-		x = g_chans512[src-45] ;
-#endif
-#ifdef PCBX9D
 		x = g_chans512[src-46] ;
-#endif
-#if defined(PCBX12D) || defined(PCBX10)
-		x = g_chans512[src-46] ;
-#endif
 		x *= 100 ;
 		value = x / 1024 ;
 	}
@@ -4014,15 +3935,6 @@ int8_t getGvarSourceValue( uint8_t src )
 }
 
 
-#if defined(PCBX12D) || defined(PCBX10)
-uint16_t TestTime ;
-uint16_t TestNote ;
-
-uint16_t ClearTime ;
-uint16_t MenuTime ;
-uint16_t Xcounter ;
-#endif
-
 #ifdef  LUA
 extern char lua_warning_info[] ;
 #endif
@@ -4030,9 +3942,7 @@ extern char lua_warning_info[] ;
 uint8_t ScriptActive ;
 
 
-#ifdef PCBX9D
 uint16_t MixerRunAtTime ;
-#endif
 
 void perMain( uint32_t no_menu )
 {
@@ -4046,9 +3956,7 @@ void perMain( uint32_t no_menu )
 	{
 		MixerCount += 1 ;
 		uint16_t t1 = getTmr2MHz() ;
-#ifdef PCBX9D
 		MixerRunAtTime = t1 ;
-#endif
 		perOutPhase(g_chans512, 0);
 		t1 = getTmr2MHz() - t1 ;
 		g_timeMixer = t1 ;
@@ -4080,19 +3988,6 @@ void perMain( uint32_t no_menu )
 		}
 	}
 
-#ifdef PCBSKY
-//extern void usbMassStorage( void ) ;
-//	usbMassStorage() ;
-#endif
-
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined (PCBX9LITE)
-#ifdef BLUETOOTH
-	if ( BtRxTimer )
-	{
-		BtRxTimer -= 1 ;
-	}
-#endif
-#endif
 	if ( SbusTimer )
 	{
 		SbusTimer -= 1 ;
@@ -4100,42 +3995,8 @@ void perMain( uint32_t no_menu )
 
 	heartbeat |= HEART_TIMER10ms;
 
-#ifdef PCB9XT
-	processAnalogSwitches() ;
-#endif // PCB9XT
-#if defined(PCBX12D) || defined(PCBX10)
-		uint16_t t1 ;
-		t1 = getTmr2MHz();
-		TestTime = t1 - TestNote ;
-		TestNote = t1 ;
-#endif
-
-#if defined(PCBX12D) || defined(PCBX10)
-	uint8_t evt = 0 ;
-	if ( ( lastTMR & 1 ) == 0 )
-	{
-		evt=getEvent();
-  	evt = checkTrim(evt);
-	}
-#else
 	uint8_t evt=getEvent();
   evt = checkTrim(evt);
-#endif
-
-#if defined(PCBX12D) || defined(PCBX10)
-	if ( t10ms & 1 )
-	{
-		ledRed() ;
-	}
-	else
-	{
-		ledBlue() ;
-	}
-	if ( evt )
-	{
-		LastEvent = evt ;
-	}
-#endif
 
 		if ( ( evt == 0 ) || ( evt == EVT_KEY_REPT(KEY_MENU) ) )
 		{
@@ -4160,9 +4021,6 @@ void perMain( uint32_t no_menu )
 		}
 
 
-#if defined(PCBX12D) || defined(PCBX10)
-	if ( ( lastTMR & 1 ) == 0 )
-#endif
 	{
 		int32_t x ;
 		if ( g_eeGeneral.rotaryDivisor == 1)
@@ -4180,12 +4038,6 @@ void perMain( uint32_t no_menu )
 		Rotary_diff = x - LastRotaryValue ;
 		LastRotaryValue = x ;
 	}
-#if defined(PCBX12D) || defined(PCBX10)
-	else
-	{
-		Rotary_diff = 0 ;
-	}
-#endif
 
 	{
 		uint16_t a = 0 ;
@@ -4254,23 +4106,7 @@ void perMain( uint32_t no_menu )
 			static uint16_t oldVolValue ;
 			uint16_t x ;
 			uint16_t divisor ;
-#if defined(PCBSKY) || defined(PCB9XT)
-			if ( g_model.anaVolume < 4 )
-#endif
-#ifdef PCBX9D
-#ifdef PCBX9LITE
-		if ( g_model.anaVolume < 2 )
-#else
-#if defined(PCBX7) || defined (PCBXLITE)
-		if ( g_model.anaVolume < 3 )
-#else // PCBX7
 		if ( g_model.anaVolume < 5 )
-#endif // PCBX7
-#endif // PCBX9LITE
-#endif
-#if defined(PCBX12D) || defined(PCBX10)
-			if ( g_model.anaVolume < 5 )
-#endif // PCBX12D
 			{
 				x = calibratedStick[g_model.anaVolume+3] + 1024 ;
 				divisor = 2044 ;
@@ -4300,13 +4136,11 @@ void perMain( uint32_t no_menu )
 		setVolume( requiredVolume ) ;
 	}
 
-#ifdef PCBX9D
   static uint8_t usbStarted = 0 ;
   if ( !usbStarted && usbPlugged() )
 	{
     usbStarted = 1 ;
   }
-#endif
 
 	if ( g_eeGeneral.stickScroll )
 	{
@@ -4408,36 +4242,13 @@ void perMain( uint32_t no_menu )
 
 // Here, if waiting for EEPROM response, don't action menus
 
-#ifdef BT_WITH_ENCODER
-	btEncTx() ;
-#endif
-
 	if ( no_menu == 0 )
 	{
 		static uint8_t alertKey ;
-#if defined(PCBX12D) || defined(PCBX10)
-//	 if ( ( lastTMR & 1 ) == 0 )
-//	 {
-//		uint16_t t1 ;
-//		t1 = getTmr2MHz();
-		waitLcdClearDdone() ;
-#else
 		if ( ScriptActive == 0 )
 		{
 	    lcd_clear() ;
 		}
-#endif
-
-#if defined(PCBX12D) || defined(PCBX10)
-//		t1 = getTmr2MHz() - t1 ;
-//		if ( ++Xcounter > 50 )
-//		{
-//			ClearTime = t1 ;
-//			Xcounter = 0 ;
-//		}
-//	 }
-#endif
-
 		if ( AlertMessage )
 		{
 			almess( AlertMessage, AlertType ) ;
@@ -4572,10 +4383,6 @@ extern uint8_t ImageY ;
 				ImageY = 32 ;
 				ImageDisplay = 1 ;
 			}
-#endif
-
-#ifdef WHERE_TRACK
-	notePosition('a') ;
 #endif
 
 #if defined(LUA) || defined(BASIC)
@@ -4890,37 +4697,7 @@ uint16_t LastAnaIn[4] ; //[NUMBER_ANALOG+NUM_EXTRA_ANALOG] ;
 #ifndef SIMU
 uint16_t anaIn(uint8_t chan)
 {
-
-#ifdef PCB9XT
   volatile uint16_t *p = &S_anaFilt[chan] ;
-	if ( ( chan >= 7 ) && ( chan <= 10 ) )
-	{
-		uint32_t x = 7 ;
-		if ( g_eeGeneral.extraPotsSource[chan-7] )
-		{
-			x += g_eeGeneral.extraPotsSource[chan-7] - 1 ;
-		}
-		p = &S_anaFilt[x] ;
-	}
-#endif
-#ifdef PCBSKY
-  volatile uint16_t *p = &S_anaFilt[chan] ;
-	if ( ( chan >= 7 ) && ( chan <= 8 ) )
-	{
-		uint32_t x = 7 ;
-		if ( g_eeGeneral.extraPotsSource[chan-7] )
-		{
-			x += g_eeGeneral.extraPotsSource[chan-7] - 1 ;
-		}
-		p = &S_anaFilt[x] ;
-	}
-#endif
-#ifdef PCBX9D
-  volatile uint16_t *p = &S_anaFilt[chan] ;
-#endif
-#if defined(PCBX12D) || defined(PCBX10)
-  volatile uint16_t *p = &S_anaFilt[chan] ;
-#endif
   uint16_t temp = *p ;
   int16_t t1 ;
 	if ( chan < 4 )	// A stick
@@ -4999,32 +4776,16 @@ void getADC_single()
 	for( x = 0 ; x < numAnalog ; x += 1 )
 	{
 		temp = AnalogData[x] >> 1;
-#ifdef ARUNI
-    if (qSixPosDelayFiltering(x, temp))
-      continue;
-#endif
 		S_anaFilt[x] = temp ;
 	}
 }
 
-#if defined(PCBSKY) || defined(PCB9XT)
-#define OSMP_SAMPLES	4
-#define OSMP_TOTAL		16384
-#define OSMP_SHIFT		3
-#endif
-#ifdef PCBX9D
 #define OSMP_SAMPLES	4
 #define OSMP_TOTAL		16384
 #define OSMP_SHIFT		3
 //#define OSMP_SAMPLES	8
 //#define OSMP_TOTAL		32768
 //#define OSMP_SHIFT		4
-#endif
-#if defined(PCBX12D) || defined(PCBX10)
-#define OSMP_SAMPLES	4
-#define OSMP_TOTAL		16384
-#define OSMP_SHIFT		3
-#endif
 
 void getADC_osmp()
 {
@@ -5035,25 +4796,11 @@ void getADC_osmp()
 	uint16_t temp[ANALOG_DATA_SIZE] ;
 	static uint16_t next_ana[ANALOG_DATA_SIZE] ;
 
-#ifdef ARUNI
-  uint32_t osmp_samples = OSMP_SAMPLES ;
-  uint32_t osmp_shift = OSMP_SHIFT ;
-	if ( g_eeGeneral.filterInput == 2 )
-	{
-    osmp_samples *= 2 ;
-    osmp_shift += 1 ;
-  }
-#endif
-
 	for( x = 0 ; x < numAnalog ; x += 1 )
 	{
 		temp[x] = 0 ;
 	}
-#ifdef ARUNI
-	for( y = 0 ; y < osmp_samples ; y += 1 )
-#else
 	for( y = 0 ; y < OSMP_SAMPLES ; y += 1 )
-#endif
 	{
 		read_adc() ;
 
@@ -5064,13 +4811,7 @@ void getADC_osmp()
 	}
 	for( x = 0 ; x < ANALOG_DATA_SIZE ; x += 1 )
 	{
-#ifdef ARUNI
-		uint16_t y = temp[x] >> osmp_shift ;
-    if (qSixPosDelayFiltering(x, y))
-      continue;
-#else
 		uint16_t y = temp[x] >> OSMP_SHIFT ;
-#endif
 		uint16_t z = S_anaFilt[x] ;
 		uint16_t w = next_ana[x] ;
 
@@ -6210,9 +5951,7 @@ void checkTHR()
   if(g_eeGeneral.disableThrottleWarning) return;
   if(g_model.disableThrottleCheck) return;
 
-#ifndef SIMU
   getADC_single();   // if thr is down - do not display warning at all
-#endif
 
 	if ( checkThrottlePosition() )
 	{
@@ -6220,13 +5959,8 @@ void checkTHR()
 	}
 
   // first - display warning
-
 	lcd_clear();
-#if defined(PCBX12D) || defined(PCBX10)
-  lcd_img( 1 + X12OFFSET, 0, HandImage,0,0, LCD_RED ) ;
-#else
   lcd_img( 1, 0, HandImage,0,0 ) ;
-#endif
   lcd_putsAtt(36 + X12OFFSET,0*FH,XPSTR("THROTTLE"),DBLSIZE|CONDENSED);
   lcd_putsAtt(36 + X12OFFSET,2*FH,PSTR(STR_WARNING),DBLSIZE|CONDENSED);
 	lcd_puts_P(0 + X12OFFSET,5*FH,  PSTR(STR_THR_NOT_IDLE) ) ;
@@ -6239,16 +5973,7 @@ void checkTHR()
 	//loop until throttle stick is low
   while (1)
   {
-#if defined(PCBX12D) || defined(PCBX10)
-		PictureDrawn = 0 ;
-#endif
-
-#ifdef SIMU
-      if (!main_thread_running) return;
-      sleep(1/*ms*/);
-#else
       getADC_single();
-#endif
 			check_backlight() ;
 
 			if ( checkThrottlePosition() )
@@ -6394,136 +6119,19 @@ uint16_t getCurrentSwitchStates()
 
 void checkSwitches()
 {
-#if defined(PCBX12D) || defined(PCBX10)
-	uint32_t warningStates ;
-#else
 	uint16_t warningStates ;
-#endif
 
-#ifdef PCB9XT
-		read_adc() ; // needed for 3/6 pos ELE switch
-		processAnalogSwitches() ;
-		processAnalogSwitches() ;		// Make sure the values are processed at startup.
-#endif // PCB9XT
 
 	warningStates = g_model.modelswitchWarningStates ;
-#if defined(PCBX12D) || defined(PCBX10)
-	warningStates |= (uint32_t)(g_model.xmodelswitchWarningStates & 0x07) << 16 ;
-#endif
 
 	if( warningStates & 1 ) return ; // if warning is on
 	warningStates >>= 1 ;
 
-#if defined(PCBSKY) || defined(PCB9XT)
-	uint8_t x = warningStates & SWP_IL5;
-  if(x==SWP_IL1 || x==SWP_IL2 || x==SWP_IL3 || x==SWP_IL4 || x==SWP_IL5) //illegal states for ID0/1/2
-  {
-    warningStates &= ~SWP_IL5; // turn all off, make sure only one is on
-    warningStates |=  SWP_ID0B;
-		g_model.modelswitchWarningStates = (warningStates << 1) ;
-  }
-#endif
-
-#if defined(PCBSKY) || defined(PCB9XT)
-	uint8_t first = 1 ;
-#endif
 	//loop until all switches are reset
 
  	warningStates &= ~g_model.modelswitchWarningDisables ;
 	while (1)
   {
-#if defined(PCBSKY) || defined(PCB9XT)
-		read_adc() ; // needed for 3/6 pos ELE switch
-#ifdef PCB9XT
-		processAnalogSwitches() ;
-#endif // PCB9XT
-
-#if defined(PCBX12D) || defined(PCBX10)
-    uint32_t i = getCurrentSwitchStates() ;
-		i &= ~g_model.modelswitchWarningDisables ;
-		if ( g_model.modelswitchWarningDisables & 0xC000 ) // 6-pos
-		{
-			i &= ~0x00010000 ;
-		}
-#else
-    uint16_t i = getCurrentSwitchStates() ;
-		i &= ~g_model.modelswitchWarningDisables ;
-#endif
-
-		if ( first )
-		{
- 			clearKeyEvents();
-			first = 0 ;
-			if( i != warningStates )
-			{
-				putSystemVoice( SV_SW_WARN, V_SW_WARN ) ;
-			}
-		}
-
-    if( (i==warningStates) || (keyDown())) // check state against settings
-    {
-        return;  //wait for key release
-    }
-
-        //show the difference between i and switch?
-        //show just the offending switches.
-        //first row - THR, GEA, AIL, ELE, ID0/1/2
-        uint16_t x = i ^ warningStates ;
-
-  			lcd_clear();
-		    lcd_img( 1, 0, HandImage,0,0 ) ;
-			  lcd_putsAtt(36,0*FH,PSTR(STR_SWITCH),DBLSIZE|CONDENSED);
-  			lcd_putsAtt(36,2*FH,PSTR(STR_WARNING),DBLSIZE|CONDENSED);
-  			lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
-
-#ifdef ARUNI
-        if(x & THR_WARN_MASK)
-            putWarnSwitch(2 + 0*FW, 0 );
-        if(x & RUD_WARN_MASK)
-            putWarnSwitch(2 + 3*FW + FW/2, 1 );
-        if(x & ELE_WARN_MASK)
-            putWarnSwitch(2 + 7*FW, 2 );
-
-        if(x & IDX_WARN_MASK)
-        {
-            if(i & SWP_ID0B)
-                putWarnSwitch(2 + 10*FW + FW/2, 3 );
-            if(i & SWP_ID1B)
-                putWarnSwitch(2 + 10*FW + FW/2, 4 );
-            if(i & SWP_ID2B)
-                putWarnSwitch(2 + 10*FW + FW/2, 5 );
-        }
-
-        if(x & AIL_WARN_MASK)
-            putWarnSwitch(2 + 14*FW, 6 );
-        if(x & GEA_WARN_MASK)
-            putWarnSwitch(2 + 17*FW + FW/2, 7 );
-#else
-        if(x & SWP_THRB)
-            putWarnSwitch(2 + 0*FW, 0 );
-        if(x & 0x0202)
-            putWarnSwitch(2 + 3*FW + FW/2, 1 );
-        if(x & 0x0C04)
-            putWarnSwitch(2 + 7*FW, 2 );
-
-        if(x & SWP_IL5)
-        {
-            if(i & SWP_ID0B)
-                putWarnSwitch(2 + 10*FW + FW/2, 3 );
-            if(i & SWP_ID1B)
-                putWarnSwitch(2 + 10*FW + FW/2, 4 );
-            if(i & SWP_ID2B)
-                putWarnSwitch(2 + 10*FW + FW/2, 5 );
-        }
-
-        if(x & 0x1040)
-            putWarnSwitch(2 + 14*FW, 6 );
-        if(x & 0x2080)
-            putWarnSwitch(2 + 17*FW + FW/2, 7 );
-#endif
-
-
-#endif
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 // To Do
 #ifndef SIMU

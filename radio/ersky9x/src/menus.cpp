@@ -5831,44 +5831,18 @@ uint8_t y = 2*FH;
 			attr = blink ;
 			b = checkOutOfOrder( b, (uint8_t *)Com2Options, MAX_COM2_OPTIONS ) ;
 		}
-//		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600BTdirect CppmTrainLCDdump  Tel+BTdirScript   "), g_model.com2Function, attr ) ;
 
-//#ifdef PCBSKY
-//	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 6 ) ;
-//#endif
-//#ifdef PCBX9D
-//	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 4 ) ;
-//#endif
-//#ifdef PCBX12D
-//	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 4 ) ;	// No LCD DUmp
-//#endif
-//#ifdef PCB9XT
-//	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 2 ) ;
-//#endif
-//		}
-#ifdef PCBSKY
-		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600BTdirect Unused   LCDdump  Tel+BTdirScript   "), g_model.com2Function, attr ) ;
-#endif
 #ifdef PCBX9D
 		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600CppmTrainLCDdump  Unused   Unused   Script   BT/Enc   "), g_model.com2Function, attr ) ;
-#endif
-#if defined(PCBX12D) || defined(PCBX10)
-		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600BTdirect CppmTrain"), g_model.com2Function, attr ) ;
-#endif
-#ifdef PCB9XT
-		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600Unused   Unused   Unused   Unused   Script   "), g_model.com2Function, attr ) ;
 #endif
 		if ( g_model.com2Function != b )
 		{
 			g_model.com2Function = b ;
 
-//#if defined(PCBX9D) || defined(PCBX12D)
-#if defined(PCBX9D)
 			if ( b == 3 )
 			{
 				stop_serial_trainer_capture() ;
 			}
-#endif
 			com2Configure() ;
 			if( g_model.com2Function == COM2_FUNC_TELEMETRY )
 			{
@@ -5886,28 +5860,13 @@ uint8_t y = 2*FH;
 
 		g_model.com2Baudrate = checkIndexed( y, XPSTR(BaudString), g_model.com2Baudrate, (sub==subN) ) ;
 
-#ifdef PCBSKY
-		if ( b != g_model.com2Baudrate )
-		{
-			if ( ( g_model.com2Function == COM2_FUNC_BTDIRECT )
-					 || ( g_model.com2Function == COM2_FUNC_TEL_BT2WAY ) )
-			{
-				if ( g_model.com2Baudrate )
-				{
-					com2_Configure( g_model.com2Baudrate-1, SERIAL_NORM, SERIAL_NO_PARITY ) ;
-				}
-			}
-		}
-#endif	// PCBSKY
 	  y += FH ;
 		subN += 1 ;
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
 		lcd_puts_Pleft( y, XPSTR("COM1 Baudrate") );
 		b = g_model.telemetryBaudrate ;
 		g_model.telemetryBaudrate = checkIndexed( y, XPSTR(BaudString), g_model.telemetryBaudrate, (sub==subN) ) ;
 	  y += FH ;
 		subN += 1 ;
-#endif	// PCBSKY
 
 	}
 	else
@@ -16654,15 +16613,6 @@ extern int32_t Rotary_diff ;
 
 extern uint8_t RawLogging ;
 
-//#ifdef PCBXLITE
-//struct t_PWMcontrol
-//{
-//volatile uint32_t timer_capture_rising_time ;
-//volatile uint32_t timer_capture_value ;
-//volatile uint32_t timer_capture_period ;
-//} ;
-//#endif
-
 void menuDebug(uint8_t event)
 {
 	MENU(XPSTR("DEBUG"), menuTabStat, e_debug, 1, {0} ) ;
@@ -16678,294 +16628,9 @@ void menuDebug(uint8_t event)
 		break ;
 	}
 
-#ifdef ACCESS
-
-//extern uint16_t AccessPulsesCount ;
-//	lcd_outhex4( 6*FW, 0, AccessPulsesCount ) ;
-////extern struct t_moduleSettings ModuleSettings[] ;
-
-//	lcd_outhex4(  0, FH, ModuleSettings[0].mode ) ;
-
-//extern struct t_16bit_fifo64 Access_int_fifo ;
-//  lcd_outhex4(  0, 2*FH, Access_int_fifo.fifo[ 0] ) ;
-//  lcd_outhex4( 25, 2*FH, Access_int_fifo.fifo[ 1] ) ;
-//  lcd_outhex4( 50, 2*FH, Access_int_fifo.fifo[ 2] ) ;
-//  lcd_outhex4( 75, 2*FH, Access_int_fifo.fifo[ 3] ) ;
-//  lcd_outhex4(  0, 3*FH, Access_int_fifo.fifo[ 4] ) ;
-//  lcd_outhex4( 25, 3*FH, Access_int_fifo.fifo[ 5] ) ;
-//  lcd_outhex4( 50, 3*FH, Access_int_fifo.fifo[ 6] ) ;
-//  lcd_outhex4( 75, 3*FH, Access_int_fifo.fifo[ 7] ) ;
-//  lcd_outhex4(  0, 4*FH, Access_int_fifo.fifo[ 8] ) ;
-//  lcd_outhex4( 25, 4*FH, Access_int_fifo.fifo[ 9] ) ;
-//  lcd_outhex4( 50, 4*FH, Access_int_fifo.fifo[10] ) ;
-//  lcd_outhex4( 75, 4*FH, Access_int_fifo.fifo[11] ) ;
-//  lcd_outhex4(  0, 5*FH, Access_int_fifo.fifo[12] ) ;
-//  lcd_outhex4( 25, 5*FH, Access_int_fifo.fifo[13] ) ;
-//  lcd_outhex4( 50, 5*FH, Access_int_fifo.fifo[14] ) ;
-//  lcd_outhex4( 75, 5*FH, Access_int_fifo.fifo[15] ) ;
-
-#endif
-
-#ifdef PCBXLITE
-
-//extern struct t_PWMcontrol PWMcontrol[] ;
-//	lcd_outhex4( 0, 1*FH, PWMcontrol[0].timer_capture_value ) ;
-//	lcd_outhex4( 30, 1*FH, PWMcontrol[0].timer_capture_period ) ;
-//	lcd_outhex4( 0, 2*FH, PWMcontrol[1].timer_capture_value ) ;
-//	lcd_outhex4( 30, 2*FH, PWMcontrol[1].timer_capture_period ) ;
-//	lcd_outhex4( 0, 3*FH, PWMcontrol[2].timer_capture_value ) ;
-//	lcd_outhex4( 30, 3*FH, PWMcontrol[2].timer_capture_period ) ;
-//	lcd_outhex4( 0, 4*FH, PWMcontrol[3].timer_capture_value ) ;
-//	lcd_outhex4( 30, 4*FH, PWMcontrol[3].timer_capture_period ) ;
-#endif
-
-#ifdef PCBX10
-  lcd_outhex4( 0,  3*FH, GPIOA->IDR & ~0x0010 ) ;
-  lcd_outhex4( 25, 3*FH, GPIOB->IDR ) ;
-  lcd_outhex4( 50, 3*FH, GPIOC->IDR ) ;
-  lcd_outhex4( 75, 3*FH, GPIOD->IDR ) ;
-  lcd_outhex4( 0,  4*FH, GPIOE->IDR ) ;
-  lcd_outhex4( 25,  4*FH, GPIOF->IDR ) ;
-  lcd_outhex4( 50,  4*FH, GPIOG->IDR ) ;
-  lcd_outhex4( 75,  4*FH, GPIOH->IDR ) ;
-  lcd_outhex4( 100,  4*FH, GPIOI->IDR & 0x8BFF ) ;
-  lcd_outhex4( 125,  4*FH, GPIOJ->IDR & 0x8E73) ;
-
-//	lcd_outhex4( 0,  9*FH, GPIOC->MODER >> 16 ) ;
-//	lcd_outhex4( 30,  9*FH, GPIOC->MODER ) ;
 
 
 
-
-#endif
-
-#if defined(PCBSKY) || defined(PCB9XT)
-
-#ifndef SMALL
-
-//#define PXX_DELAYS	1
-
-#ifdef PXX_DELAYS
-extern uint16_t PxxTime[2] ;
-static uint16_t OldPxxTime[2] ;
-static uint16_t counter ;
-
-	if ( ++counter > 49 )
-	{
-		counter = 0 ;
-		OldPxxTime[0] = PxxTime[0] ;
-		OldPxxTime[1] = PxxTime[1] ;
-	}
-	lcd_outhex4( 0,  1*FH, OldPxxTime[0] ) ;
-  lcd_outhex4( 30, 1*FH, OldPxxTime[1] ) ;
-
-#else
-	lcd_outhex4( 0,  1*FH, FrskyHubData[FR_VCC     ] ) ;
-  lcd_outhex4( 30, 1*FH, FrskyHubData[FR_CURRENT ] ) ;
-  lcd_outhex4( 60, 1*FH, FrskyHubData[FR_ALT_BARO] ) ;
-  lcd_outhex4( 90, 1*FH, FrskyHubData[FR_BASEMODE] ) ;
-
-  lcd_outhex4( 0,  2*FH, FrskyHubData[FR_WP_DIST ] ) ;
-  lcd_outhex4( 30, 2*FH, FrskyHubData[FR_HEALTH  ] ) ;
-  lcd_outhex4( 60, 2*FH, FrskyHubData[FR_MSG     ] ) ;
-  lcd_outhex4( 90, 2*FH, FrskyHubData[FR_HOME_DIR] ) ;
-#endif
-
-#ifndef PCB9XT
-  lcd_outhex4( 0,  3*FH, FrskyHubData[FR_HOME_DIST] ) ;
-  lcd_outhex4( 30, 3*FH, FrskyHubData[FR_CPU_LOAD ] ) ;
-  lcd_outhex4( 60, 3*FH, FrskyHubData[FR_GPS_HDOP ] ) ;
-  lcd_outhex4( 90, 3*FH, FrskyHubData[FR_WP_NUM   ] ) ;
-
-  lcd_outhex4( 0,  4*FH, FrskyHubData[FR_WP_BEARING] ) ;
-  lcd_outhex4( 30, 4*FH, FrskyHubData[FR_VOLTS     ] ) ;
-  lcd_outhex4( 60, 4*FH, FrskyHubData[FR_TEMP2     ] ) ;
-  lcd_outhex4( 90, 4*FH, FrskyHubData[FR_FUEL      ] ) ;
-#endif
-
-#ifdef PCB9XT
-  lcd_outhex4( 0,  4*FH, GPIOA->IDR ) ;
-  lcd_outhex4( 25, 4*FH, GPIOB->IDR ) ;
-  lcd_outhex4( 50, 4*FH, GPIOC->IDR ) ;
-  lcd_outhex4( 75, 4*FH, check_soft_power() ) ;
-
-#endif
-
-#ifdef REVX
-  lcd_outhex4( 0,  5*FH, PIOA->PIO_PDSR >> 16 ) ;
-  lcd_outhex4( 20,  5*FH, PIOA->PIO_PDSR ) ;
-  lcd_outhex4( 43,  5*FH, PIOB->PIO_PDSR >> 16 ) ;
-  lcd_outhex4( 63,  5*FH, PIOB->PIO_PDSR ) ;
-  lcd_outhex4( 86,  5*FH, PIOC->PIO_PDSR >> 16 ) ;
-  lcd_outhex4( 106,  5*FH, PIOC->PIO_PDSR ) ;
-#else
-
-#ifndef PCB9XT
-	lcd_outhex4( 0,  5*FH, FrskyHubData[FR_TEMP1     ] ) ;
-  lcd_outhex4( 30, 5*FH, FrskyHubData[FR_A1_COPY   ] ) ;
-extern uint8_t MultiId[] ;
-  lcd_outhex4( 60,  5*FH, MultiId[1] | (MultiId[0] << 8 ) ) ;
-  lcd_outhex4( 90,  5*FH, MultiId[3] | (MultiId[2] << 8 ) ) ;
-#else
-extern uint8_t MultiId[] ;
-  lcd_outhex4( 0,  5*FH, MultiId[1] | (MultiId[0] << 8 ) ) ;
-  lcd_outhex4( 30,  5*FH, MultiId[3] | (MultiId[2] << 8 ) ) ;
-#endif
-
-#endif	// REVX
-#endif	// nSMALL
-#endif	// PCBSKY
-
-//#ifdef PCBX7
-//extern uint8_t BtRnameDebug[] ;
-//	uint32_t x ;
-//	uint32_t y ;
-//	y = FH ;
-//	for ( x = 0 ; x < 10 ; x += 2 )
-//	{
-//		lcd_outhex4( 12*x, y, BtRnameDebug[x+1] | (BtRnameDebug[x] << 8 ) ) ;
-//	}
-//	y = 2*FH ;
-//	for ( x = 10 ; x < 20 ; x += 2 )
-//	{
-//		lcd_outhex4( 12*(x-10), y, BtRnameDebug[x+1] | (BtRnameDebug[x] << 8 ) ) ;
-//	}
-//	y = 3*FH ;
-//	for ( x = 20 ; x < 30 ; x += 2 )
-//	{
-//		lcd_outhex4( 12*(x-20), y, BtRnameDebug[x+1] | (BtRnameDebug[x] << 8 ) ) ;
-//	}
-//	y = 4*FH ;
-//	for ( x = 30 ; x < 40 ; x += 2 )
-//	{
-//		lcd_outhex4( 12*(x-30), y, BtRnameDebug[x+1] | (BtRnameDebug[x] << 8 ) ) ;
-//	}
-
-//#endif	// PCBX7
-
-//#ifdef PCBX9LITE
-//extern uint8_t PxxSerial[] ;
-//  lcd_outhex4( 0,  2*FH, PxxSerial[0] ) ;
-//  lcd_outhex4( 30, 2*FH, PxxSerial[1] ) ;
-//  lcd_outhex4( 60, 2*FH, PxxSerial[2] ) ;
-//  lcd_outhex4( 90, 2*FH, PxxSerial[3] ) ;
-//  lcd_outhex4( 0,  3*FH, PxxSerial[4] ) ;
-//  lcd_outhex4( 30, 3*FH, PxxSerial[5] ) ;
-//  lcd_outhex4( 60, 3*FH, PxxSerial[6] ) ;
-//  lcd_outhex4( 90, 3*FH, PxxSerial[7] ) ;
-//  lcd_outhex4( 0,  4*FH, PxxSerial[8] ) ;
-//  lcd_outhex4( 30, 4*FH, PxxSerial[9] ) ;
-//  lcd_outhex4( 60, 4*FH, PxxSerial[10] ) ;
-//  lcd_outhex4( 90, 4*FH, PxxSerial[11] ) ;
-//extern uint16_t PxxDebug0 ;
-//extern uint16_t PxxDebug1 ;
-//  lcd_outhex4( 0,  5*FH, PxxDebug0 ) ;
-//  lcd_outhex4( 30, 5*FH, PxxDebug1 ) ;
-//#endif	// PCBX9LITE
-
-#if defined(PCBX12D) || defined(PCBX10)
-//extern uint16_t HbeatCounter ;
-//  lcd_outhex4( 0, 3*FH, GPIOA->IDR ) ;
-//  lcd_outhex4( 25, 3*FH, DAC->CR ) ;
-//extern uint16_t LoadImageCount ;
-//  lcd_outhex4( 0, 3*FH, LoadImageCount ) ;
-
-
-//extern uint8_t LoadImageResult ;
-//  lcd_outhex4( 25, 2*FH, LoadImageResult ) ;
-
-//  lcd_outhex4( 0, 8*FH, RTC->BKP2R >> 16 ) ;
-//  lcd_outhex4( 25, 8*FH, RTC->BKP2R ) ;
-//  lcd_outhex4( 50, 8*FH, RTC->BKP3R >> 16 ) ;
-//  lcd_outhex4( 75, 8*FH, RTC->BKP3R ) ;
-//  lcd_outhex4( 100, 8*FH, RTC->BKP4R >> 16 ) ;
-//  lcd_outhex4( 125, 8*FH, RTC->BKP4R ) ;
-//  lcd_outhex4( 150, 8*FH, RTC->BKP5R >> 16 ) ;
-//  lcd_outhex4( 175, 8*FH, RTC->BKP5R ) ;
-
-//  lcd_outhex4( 0,   9*FH, RTC->BKP6R >> 16 ) ;
-//  lcd_outhex4( 25,  9*FH, RTC->BKP6R ) ;
-//  lcd_outhex4( 50,  9*FH, RTC->BKP7R >> 16 ) ;
-//  lcd_outhex4( 75,  9*FH, RTC->BKP7R ) ;
-//  lcd_outhex4( 100, 9*FH, RTC->BKP8R >> 16 ) ;
-//  lcd_outhex4( 125, 9*FH, RTC->BKP8R ) ;
-//  lcd_outhex4( 150, 9*FH, RTC->BKP9R >> 16 ) ;
-//  lcd_outhex4( 175, 9*FH, RTC->BKP9R ) ;
-
-//  lcd_outhex4( 0,   10*FH, RTC->BKP10R >> 16 ) ;
-//  lcd_outhex4( 25,  10*FH, RTC->BKP10R ) ;
-//  lcd_outhex4( 50,  10*FH, RTC->BKP11R >> 16 ) ;
-//  lcd_outhex4( 75,  10*FH, RTC->BKP11R ) ;
-//  lcd_outhex4( 100, 10*FH, RTC->BKP12R >> 16 ) ;
-//  lcd_outhex4( 125, 10*FH, RTC->BKP12R ) ;
-//  lcd_outhex4( 150, 10*FH, RTC->BKP13R >> 16 ) ;
-//  lcd_outhex4( 175, 10*FH, RTC->BKP13R ) ;
-
-//  lcd_outhex4( 0,   11*FH, RTC->BKP14R >> 16 ) ;
-//  lcd_outhex4( 25,  11*FH, RTC->BKP14R ) ;
-//  lcd_outhex4( 50,  11*FH, RTC->BKP15R >> 16 ) ;
-//  lcd_outhex4( 75,  11*FH, RTC->BKP15R ) ;
-//  lcd_outhex4( 100, 11*FH, RTC->BKP16R >> 16 ) ;
-//  lcd_outhex4( 125, 11*FH, RTC->BKP16R ) ;
-//  lcd_outhex4( 150, 11*FH, RTC->BKP17R >> 16 ) ;
-//  lcd_outhex4( 175, 11*FH, RTC->BKP17R ) ;
-
-#endif
-
-//#if defined(PCBX9D) || defined(PCBX12D)
-#if defined(PCBX9D)
-
-//extern uint16_t XjtHbeatOffset ;
-//  lcd_outhex4( 0,  3*FH, XjtHbeatOffset ) ;
-//  lcd_outhex4( 25,  3*FH, XjtHeartbeatCapture.valid ) ;
-//extern uint16_t HbCapDebug ;
-//extern uint16_t HbCapDebug1 ;
-//extern uint16_t HbCapDebug2 ;
-//  lcd_outhex4( 50,  3*FH, HbCapDebug ) ;
-//  lcd_outhex4( 75,  3*FH, HbCapDebug1 ) ;
-//  lcd_outhex4( 100,  3*FH, HbCapDebug2 ) ;
-//  lcd_outhex4( 0,  2*FH, GPIOC->MODER >> 16 ) ;
-//  lcd_outhex4( 25,  2*FH, GPIOC->MODER ) ;
-//  lcd_outhex4( 50,  2*FH, SYSCFG->EXTICR[2] ) ;
-//  lcd_outhex4( 75,  2*FH, EXTI->IMR ) ;
-//  lcd_outhex4( 100,  2*FH, EXTI->PR ) ;
-
-//	uint8_t *pt = (uint8_t *)&g_model.Module[1] ;
-
-//  lcd_outhex4( 0,  2*FH, *pt++ ) ;
-//  lcd_outhex4( 30,  2*FH, *pt++ ) ;
-//  lcd_outhex4( 60,  2*FH, *pt++ ) ;
-//  lcd_outhex4( 90,  2*FH, *pt++ ) ;
-
-//  lcd_outhex4( 0,  3*FH, *pt++ ) ;
-//  lcd_outhex4( 30,  3*FH, *pt++ ) ;
-//  lcd_outhex4( 60,  3*FH, *pt++ ) ;
-//  lcd_outhex4( 90,  3*FH, *pt++ ) ;
-
-//  lcd_outhex4( 0,  4*FH, *pt++ ) ;
-//  lcd_outhex4( 30,  4*FH, *pt++ ) ;
-//  lcd_outhex4( 60,  4*FH, *pt++ ) ;
-//  lcd_outhex4( 90,  4*FH, *pt++ ) ;
-
-
-#endif
-
-//#ifdef PCBX9D
-//extern uint16_t XFDebug1 ;
-//extern uint16_t XFDebug2 ;
-//extern uint16_t XFDebug3 ;
-//extern uint16_t XFDebug4 ;
-//extern uint16_t XFDebug5 ;
-
-//  lcd_outhex4( 0,  4*FH, XFDebug1 ) ;
-//  lcd_outhex4( 30, 4*FH, XFDebug2 ) ;
-//  lcd_outhex4( 60, 4*FH, XFDebug3 ) ;
-//  lcd_outhex4( 90, 4*FH, XFDebug4 ) ;
-//  lcd_outhex4( 0,  5*FH, XFDebug5 ) ;
-
-
-
-//#endif
 
 
 	lcd_puts_Pleft( 6*FH, XPSTR("Raw Logging") ) ;
@@ -16977,12 +16642,12 @@ extern uint16_t TelRxCount ;
   lcd_outhex4( 12*FW,  7*FH, TelRxCount ) ;
   lcd_outhex4( 17*FW,  7*FH, FrskyTelemetryType | (TelemetryType << 8) ) ;
 
-#ifdef PCB9XT
-extern uint16_t I2CencCounter ;
-	lcd_puts_Pleft( 5*FH, XPSTR("\014I2C=") ) ;
-  lcd_outhex4( 17*FW,  5*FH, I2CencCounter ) ;
-#endif
 }
+
+
+
+
+
 
 uint8_t TrainerPolarity ;	// Input polarity
 

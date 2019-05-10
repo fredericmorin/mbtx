@@ -51,17 +51,7 @@ uint16_t USART_NE ;
 uint16_t USART_FE ;
 uint16_t USART_PE ;
 
-#ifndef PCBX12D
- #ifdef PCBX9D
-  #ifndef PCBXLITE
-   #ifndef PCBX9LITE
-    #ifndef PCBX10
 #define XJT_HEARTBEAT_BIT	0x0080		// PC7
-    #endif
-   #endif
-  #endif
- #endif
-#endif
 
 void putCaptureTime( struct t_softSerial *pss, uint16_t time, uint32_t value ) ;
 
@@ -69,15 +59,9 @@ uint8_t LastReceivedSportByte ;
 
 extern struct t_serial_tx *Current_Com2 ;
 
-#ifndef PCBX12D
-#ifndef PCBX10
 void USART6_Sbus_configure()
 {
- #ifdef PCBX9D
-  #ifndef PCBX9LITE
 	stop_xjt_heartbeat() ;
-  #endif // X3
- #endif
 	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 	configure_pins( 0x0080, PIN_PERIPHERAL | PIN_PORTC | PIN_PER_8 ) ;
@@ -89,52 +73,21 @@ void USART6_Sbus_configure()
 	NVIC_SetPriority( USART6_IRQn, 5 ) ; // Lower priority interrupt
   NVIC_EnableIRQ(USART6_IRQn) ;
 
-#ifdef PCBX9LITE
-	EXTERNAL_RF_ON() ;
-#endif // X3
 }
 
 void stop_USART6_Sbus()
 {
-#ifdef PCBX9LITE
-	if ( g_model.Module[EXTERNAL_MODULE].protocol == PROTO_PXX )
-	{
-		return ;	// USART6 in use
-	}
-	EXTERNAL_RF_OFF() ;
-#endif // X3
-
 	configure_pins( 0x0080, PIN_INPUT | PIN_PORTC ) ;
   NVIC_DisableIRQ(USART6_IRQn) ;
- #ifdef PCBX9D
-  #ifndef PCBX9LITE
 	init_xjt_heartbeat() ;
-  #endif // X3
- #endif
 }
 
-#ifndef PCBX9LITE
- #ifndef PCBXLITE
 extern "C" void USART6_IRQHandler()
 {
-#ifdef WDOG_REPORT
-#ifdef PCBSKY
-	GPBR->SYS_GPBR1 = 0x94 ;
-#else
-	RTC->BKP1R = 0x94 ;
-#endif
-#endif
 	put_fifo64( &Sbus_fifo, USART6->DR ) ;
 }
- #endif // Xlite
-#endif // X3
 
 
-#endif // #ifndef PCBX10
-#endif // #ifndef PCBX12D
-
-
-#ifndef PCB9XT
 void UART_Sbus_configure( uint32_t masterClock )
 {
 	USART3->BRR = PeripheralSpeeds.Peri1_frequency / 100000 ;
@@ -169,8 +122,6 @@ void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
 	USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
 	com2Parity( parity ) ;
 }
-
-#endif // #ifndef PCB9XT
 
 void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
 {
@@ -239,7 +190,6 @@ uint32_t hubTxPending()
 	return TelemetryTx.sportBusy ;
 }
 
-#ifndef PCB9XT
 void com1Parity( uint32_t even )
 {
 	if ( even )
@@ -264,7 +214,6 @@ void com2Parity( uint32_t even )
 		USART3->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
 	}
 }
-#endif
 
 //uint16_t SportStartDebug ;
 
@@ -283,7 +232,6 @@ void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 	USART2->CR1 |= USART_CR1_TXEIE | USART_CR1_TE ;	// Force an idle frame
 }
 
-#if !defined(SIMU)
 
 
 uint16_t RxIntCount ;
@@ -376,14 +324,11 @@ extern "C" void USART2_IRQHandler()
 }
 
 
-#endif
-
 uint16_t rxTelemetry()
 {
 	return get_fifo128( &Com1_fifo ) ;
 }
 
-#ifndef PCB9XT
 void txmit( uint8_t c )
 {
 	/* Wait for the transmitter to be ready */
@@ -393,8 +338,6 @@ void txmit( uint8_t c )
 	USART3->DR = c ;
 }
 
-#ifndef PCBX7
-//#ifndef PCBX9LITE
 uint32_t txPdcCom2( struct t_serial_tx *data )
 {
 	data->ready = 1 ;
@@ -455,23 +398,15 @@ extern "C" void USART3_IRQHandler()
 		{
 			if ( status & USART_FLAG_ORE )
 			{
-#ifdef PCB9XT
-				USART2_ORE += 1 ;
-#else
 				USART_ORE += 1 ;
-#endif
 			}
 		}
     status = puart->SR ;
 	}
 }
-#endif
-//#endif
-#endif
 
 void start_timer11()
 {
-#ifndef SIMU
 
 	RCC->APB2ENR |= RCC_APB2ENR_TIM11EN ;		// Enable clock
 	TIM11->PSC = (PeripheralSpeeds.Peri2_frequency*PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;		// 0.5uS
@@ -485,7 +420,6 @@ void start_timer11()
 
 	NVIC_SetPriority( TIM1_TRG_COM_TIM11_IRQn, 14 ) ; // Low priority interrupt
 	NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn) ;
-#endif
 }
 
 void stop_timer11()
@@ -503,36 +437,21 @@ void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity )
 	pss->bitTime = 2000000 / baudrate ;
 	pss->softSerialEvenParity = parity ? 1 : 0 ;
 
-#ifdef PCB9XT
-	pss->softSerInvert = invert ? 0 : GPIO_Pin_3 ;	// Port A3
-#else
 	pss->softSerInvert = invert ? 0 : GPIO_Pin_6 ;	// Port D6
-#endif
 	pss->pfifo = &Com1_fifo ;
 
 	pss->lineState = LINE_IDLE ;
 	CaptureMode = CAP_COM1 ;
 
-#ifdef PCB9XT
-#define EXT_BIT_MASK	0x00000008
-	SYSCFG->EXTICR[0] = 0 ;
-#else
 #define EXT_BIT_MASK	0x00000040
 	SYSCFG->EXTICR[1] |= 0x0300 ;
-#endif
 	EXTI->IMR |= EXT_BIT_MASK ;
 	EXTI->RTSR |= EXT_BIT_MASK ;
 	EXTI->FTSR |= EXT_BIT_MASK ;
 
-#ifdef PCB9XT
-	configure_pins( GPIO_Pin_3, PIN_INPUT | PIN_PORTA ) ;
-	NVIC_SetPriority( EXTI3_IRQn, 0 ) ; // Highest priority interrupt
-	NVIC_EnableIRQ( EXTI3_IRQn) ;
-#else
 	configure_pins( GPIO_Pin_6, PIN_INPUT | PIN_PORTD ) ;
 	NVIC_SetPriority( EXTI9_5_IRQn, 0 ) ; // Highest priority interrupt
 	NVIC_EnableIRQ( EXTI9_5_IRQn) ;
-#endif
 
 	start_timer11() ;
 }
@@ -553,8 +472,6 @@ extern "C" void EXTI9_5_IRQHandler()
 
 	capture =  TIM7->CNT ;	// Capture time
 
-#ifdef PCBX9D
- #ifndef PCBXLITE
 	if ( EXTI->PR & XJT_HEARTBEAT_BIT )
 	{
 		XjtHeartbeatCapture.value = capture ;
@@ -564,17 +481,10 @@ extern "C" void EXTI9_5_IRQHandler()
 	{
 		return ;
 	}
- #endif	// XLITE
-#endif // X9D
 	EXTI->PR = EXT_BIT_MASK ;
 
-#ifdef PCB9XT
-	dummy = GPIOA->IDR ;
-	if ( ( dummy & GPIO_Pin_3 ) == pss->softSerInvert )
-#else
 	dummy = GPIOD->IDR ;
 	if ( ( dummy & GPIO_Pin_6 ) == pss->softSerInvert )
-#endif
 	{
 		// L to H transition
 		pss->LtoHtime = capture ;
@@ -611,13 +521,6 @@ extern "C" void EXTI9_5_IRQHandler()
 
 extern "C" void TIM1_TRG_COM_TIM11_IRQHandler()
 {
-#ifdef WDOG_REPORT
-#ifdef PCBSKY
-	GPBR->SYS_GPBR1 = 0x9E ;
-#else
-	RTC->BKP1R = 0x9E ;
-#endif
-#endif
 	uint32_t status ;
 	struct t_softSerial *pss = &SoftSerial1 ;
 

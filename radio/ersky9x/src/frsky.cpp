@@ -25,18 +25,8 @@
 #include "pulses.h"
 #include "audio.h"
 #include "menus.h"
-#ifdef PCBSKY
-#include "AT91SAM3S4.h"
-#endif
-#if defined(PCBX12D) || defined(PCBX10)
-#ifndef SIMU
-#include "X12D/stm32f4xx.h"
-#include "X12D/core_cm4.h"
-#endif
-#else
 #ifndef SIMU
 #include "core_cm3.h"
-#endif
 #endif
 #include "lcd.h"
 #include "ff.h"
@@ -201,13 +191,6 @@ uint16_t Frsky_Amp_hour_prescale ;
 uint8_t TelemetryType ;
 uint8_t SportStreamingStarted ;
 
-#ifdef REVX
-uint8_t JetiTxReady ;
-uint16_t JetiTxChar ;
-extern uint8_t JetiBuffer[] ; // 32 characters
-extern uint8_t JetiIndex ;
-#endif
-
 uint8_t FrskyTelemetryType ;
 uint8_t FrskyComPort ;
 uint8_t numPktBytes = 0;
@@ -267,34 +250,12 @@ enum CrossfireSensorIndexes {
 
 #endif
 
-#if defined(VARIO)
-stuct t_vario VarioData ;
-#endif
-
 void evalVario(int16_t altitude_bp, uint16_t altitude_ap)
 {
-#if defined(VARIO)
-	stuct t_vario *vptr ;
-	vptr = VarioData ;
-
-  int32_t vptr->VarioAltitude_cm = (int32_t)altitude_bp * 100 + (altitude_bp > 0 ? altitude_ap : -altitude_ap) ;
-  uint8_t varioAltitudeQueuePointer = vptr->VarioAltitudeQueuePointer + 1 ;
-  if (varioAltitudeQueuePointer >= VARIO_QUEUE_LENGTH)
-	{
-    varioAltitudeQueuePointer = 0 ;
-	}
-  vptr->VarioAltitudeQueuePointer = varioAltitudeQueuePointer ;
-  vptr->VarioSpeed -= vptr->VarioAltitudeQueue[varioAltitudeQueuePointer] ;
-  vptr->VarioAltitudeQueue[varioAltitudeQueuePointer] = varioAltitude_cm - vptr->VarioAltitude_cm;
-  vptr->VarioAltitude_cm = varioAltitude_cm;
-  vptr->VarioSpeed += vptr->VarioAltitudeQueue[varioAltitudeQueuePointer] ;
-#endif
 }
 
 void dsmTelemetryStartReceive()
 {
-#ifdef PCBSKY
- #ifndef REVX
 	if ( g_model.frskyComPort == 0 )
 	{
 		if ( CaptureMode == CAP_COM1 )
@@ -306,22 +267,6 @@ void dsmTelemetryStartReceive()
 			}
 		}
 	}
- #endif // nREVX
-#endif // PCBSKY
-
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
-	if ( g_model.frskyComPort == 0 )
-	{
-		if ( CaptureMode == CAP_COM1 )
-		{
-			uint16_t rxchar ;
-			while ( ( rxchar = get_fifo128( &Com1_fifo ) ) != 0xFFFF )
-			{
-				// flush Rx buffer
-			}
-		}
-	}
-#endif // PCBX9D || PCB9XT
 
 	numPktBytes = 0 ;
 }
@@ -703,18 +648,6 @@ uint16_t Mcounter ;
 
 void frsky_proc_user_byte( uint8_t byte )
 {
-#ifdef DEBUG_MAVLINK
-	if ( byte == 0x5E )
-	{
-		if ( ++Mcounter >= 6 )
-		{
-			crlf() ;
-			Mcounter = 0 ;
-		}
-	}
-	p2hex( byte ) ;
-#endif
-
 	if (g_model.FrSkyUsrProto == 0)  // FrSky Hub
 	{
 
@@ -1374,11 +1307,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 	}
 	else if ( type == 0x80 )
 	{
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 		if ( g_model.Module[1].protocol == PROTO_MULTI )
-#else
-		if ( ( g_model.Module[0].protocol == PROTO_MULTI ) || ( g_model.Module[1].protocol == PROTO_MULTI ) )
-#endif
 		{
 			dsmBindResponse( *(packet+6), *(packet+5) ) ;
 		}
@@ -2199,38 +2128,23 @@ void rawLogByte( uint8_t byte ) ;
 void frsky_receive_byte( uint8_t data )
 {
 	TelRxCount += 1 ;
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9LITE)
-#ifdef BLUETOOTH
-	if ( g_model.bt_telemetry )
-	{
-		telem_byte_to_bt( data ) ;
-	}
-#endif
-#endif
-#ifndef ACCESS
 	if ( RawLogging )
 	{
 		rawLogByte( data ) ;
 	}
-#endif
-//#ifdef REVX
 	if ( TelemetryType == TEL_MAVLINK )
 	{
 		mavlinkReceive( data ) ;
 		return ;
 	}
-//#endif
-//	XFDebug5 += 1 ;
 
 #ifdef XFIRE
-// #ifdef REVX
 		if ( g_model.Module[1].protocol == PROTO_XFIRE )
 		{
 			// process Xfire data here
 			processCrossfireTelemetryData( data ) ;
 			return ;
 		}
-// #endif
 #endif
 
   uint8_t numbytes = numPktBytes ;
@@ -2318,13 +2232,11 @@ void frsky_receive_byte( uint8_t data )
         if (data == START_STOP)
 				{
 #ifndef DISABLE_SPORT
-//#ifndef REVX
 					if ( FrskyTelemetryType )		// SPORT
 					{
          		dataState = frskyDataInFrame ;
            	numbytes = 0 ;
 					}
-//#endif
 #endif
 					break ; // Remain in userDataStart if possible 0x7e,0x7e doublet found.
 				}
@@ -2528,7 +2440,7 @@ void FRSKY_Init( uint8_t brate )
 		uint32_t parity = SERIAL_NO_PARITY ;
 		if ( g_model.Module[1].protocol == PROTO_MULTI )
 		{
-			baudrate = XFIRE_BAUD_RATE ;
+			baudrate = 100000 ;
 			parity = SERIAL_EVEN_PARITY ;
 			if ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FRSKYX )
 			{
@@ -2544,7 +2456,7 @@ void FRSKY_Init( uint8_t brate )
 			}
 		}
 
-		initComPort( XFIRE_BAUD_RATE, (g_model.telemetry2RxInvert << 1) | g_model.telemetryRxInvert, parity ) ;
+		initComPort( baudrate, (g_model.telemetry2RxInvert << 1) | g_model.telemetryRxInvert, parity ) ;
 	}
 	else if ( brate == FRSKY_TEL_SPORT )
 	{
@@ -2572,7 +2484,7 @@ void FRSKY_Init( uint8_t brate )
 			{
 				FrskyTelemetryType = FRSKY_TEL_HITEC ;
 			}
-		 	initComPort( XFIRE_BAUD_RATE, (g_model.telemetry2RxInvert << 1) | g_model.telemetryRxInvert, SERIAL_EVEN_PARITY ) ;
+		 	initComPort( 100000, (g_model.telemetry2RxInvert << 1) | g_model.telemetryRxInvert, SERIAL_EVEN_PARITY ) ;
 		}
 		else
 		{
@@ -2739,22 +2651,6 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 {
 	uint8_t type = TEL_FRSKY_HUB ;
 
-#ifdef PCBSKY
-	if ( g_model.Module[1].protocol == PROTO_PXX )
-	{
-		type = TEL_FRSKY_SPORT ;
-	}
-#endif
-
-#ifdef PCB9XT
-	type = g_model.Module[0].protocol == PROTO_PXX ;
-	if ( g_model.Module[0].protocol == PROTO_OFF )
-	{
-		type = g_model.Module[1].protocol == PROTO_PXX ;
-	}
-#endif
-
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 	type = g_model.Module[0].protocol == PROTO_PXX ;
 	if ( g_model.Module[0].protocol == PROTO_OFF )
 	{
@@ -2773,51 +2669,15 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 			}
 		}
 	}
- #ifdef ACCESS
-	if ( g_model.Module[0].protocol == PROTO_ACCESS )
-	{
-		type = TEL_FRSKY_SPORT ;
-	}
-	else
-	{
-		if ( g_model.Module[0].protocol == PROTO_OFF )
-		{
-			if ( g_model.Module[1].protocol == PROTO_ACCESS )
-			{
-				type = TEL_FRSKY_SPORT ;
-			}
-		}
-	}
- #endif
 
-#endif
-
-#ifdef PCBSKY
 	if ( (g_model.Module[1].protocol == PROTO_DSM2) && ( g_model.Module[1].sub_protocol == DSM_9XR ) )
 	{
 		type = TEL_DSM ;
 	}
-	if ( ( g_model.Module[0].protocol == PROTO_MULTI ) || ( g_model.Module[1].protocol == PROTO_MULTI ) )
-	{
-		type = TEL_MULTI ;
-	}
-#endif
-
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX12D) || defined(PCBX7) || defined(PCBX10)
-	if ( (g_model.Module[1].protocol == PROTO_DSM2) && ( g_model.Module[1].sub_protocol == DSM_9XR ) )
-	{
-		type = TEL_DSM ;
-	}
-#ifdef PCB9XT
-	if ( ( g_model.Module[0].protocol == PROTO_MULTI ) || ( g_model.Module[1].protocol == PROTO_MULTI ) )
-#else
 	if ( g_model.Module[1].protocol == PROTO_MULTI )
-#endif
 	{
 		type = TEL_MULTI ;
 	}
-#endif
-
 
 	switch ( telemetryType )
 	{
@@ -2844,24 +2704,10 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 		break ;
 	}
 #ifdef XFIRE
- #ifdef REVX
 	if ( g_model.Module[1].protocol == PROTO_XFIRE )
 	{
 		type = TEL_XFIRE ;
 	}
- #endif
- #ifdef PCB9XT
-	if ( g_model.Module[1].protocol == PROTO_XFIRE )
-	{
-		type = TEL_XFIRE ;
-	}
- #endif
- #ifdef PCBX9D
-	if ( g_model.Module[1].protocol == PROTO_XFIRE )
-	{
-		type = TEL_XFIRE ;
-	}
- #endif
 #endif
 	return type ;
 }
@@ -2875,14 +2721,8 @@ void check_frsky( uint32_t fivems )
 	uint8_t type ;
 
 	type = decodeTelemetryType( telemetryType ) ;
-#ifdef PCBSKY
 	if ( ( type != TelemetryType )
 			 || ( FrskyComPort != g_model.frskyComPort ) )
-#endif
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
-	if ( ( type != TelemetryType )
-			 || ( FrskyComPort != g_model.frskyComPort ) )
-#endif
 	{
 		telemetry_init( type ) ;
 	}
@@ -2894,143 +2734,15 @@ void check_frsky( uint32_t fivems )
 		}
 	}
 
-#ifdef PCBSKY
-#ifdef REVX
-	if ( TelemetryType == TEL_JETI )
-	{
-		int32_t value ;
-		while ( (value = getJetiWord()) != -1 )
-		{
-			// send byte to JETI code
-			if ( ( value & 0x0100 ) == 0 )
-			{
-				if ( ( value & 0x000000FF ) == 0x000000FE )
-				{
-					JetiIndex = 0 ;
-				}
-			}
-			else
-
-			{
-				value &= 0x000000FF ;
-				if ( value == 0x000000DF )
-				{
-					value = '@' ;
-				}
-				JetiBuffer[JetiIndex++] = value ;
-				if ( JetiIndex > 35 )
-				{
-					JetiIndex = 35 ;
-				}
-			}
-		}
-	}
-	else
-	{
-#endif
-
-		if ( g_model.frskyComPort == 0 )
-		{
-//#ifndef REVX
-//			if ( CaptureMode == CAP_COM1 )
-//			{
-				uint16_t rxchar ;
-				while ( ( rxchar = get_fifo128( &Com1_fifo ) ) != 0xFFFF )
-				{
-					frsky_receive_byte( rxchar ) ;
-				}
-//			}
-//			else
-//			{
-//				uint16_t rxchar ;
-//				while ( ( rxchar = get_fifo128( &Com1_fifo ) ) != 0xFFFF )
-//				{
-//					frsky_receive_byte( rxchar ) ;
-//				}
-//			}
-//#else
-//			uint16_t rxchar ;
-//			while ( ( rxchar = get_fifo128( &Com1_fifo ) ) != 0xFFFF )
-//			{
-//				frsky_receive_byte( rxchar ) ;
-//			}
-//#endif
-		}
-		else
-		{
-//			if ( CaptureMode == CAP_COM2 )
-//			{
-				uint16_t rxchar ;
-				while ( ( rxchar = rxCom2() ) != 0xFFFF )
-				{
-					frsky_receive_byte( rxchar ) ;
-				}
-//			}
-//			else
-//			{
-//				uint16_t rxchar ;
-//				while ( ( rxchar = rxCom2() ) != 0xFFFF )
-//				{
-//					frsky_receive_byte( rxchar ) ;
-//				}
-//			}
-		}
-#ifdef REVX
-	}
-#endif
-#endif // PCBSKY
-
-//#ifdef REVX
-//	if ( telemetryType == TELEMETRY_DSM)		// DSM telemetry
-//	{
-//		if ( DsmRxTimeout )
-//		{
-//			DsmRxTimeout = 0 ;
-//			processDsmPacket( frskyRxBuffer, numPktBytes ) ;
-//		}
-//	}
-//#endif
-
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 	{
 		uint16_t rxchar ;
-#ifdef ACCESS
-extern uint8_t s_current_protocol[] ;
-		if ( (s_current_protocol[EXTERNAL_MODULE] == PROTO_ACCESS ) ||
-				 (s_current_protocol[INTERNAL_MODULE] == PROTO_ACCESS ) )
-		{
-			int32_t rxbyte ;
-			while ( ( rxbyte = get_fifo128( &Access_int_fifo ) ) != -1 )
-			{
-				accessRecieveByte( rxbyte, 0 ) ;
-			}
-			while ( ( rxbyte = get_fifo128( &Access_ext_fifo ) ) != -1 )
-			{
-				accessRecieveByte( rxbyte, 1 ) ;
-			}
-		}
-//		else
-#endif
 		if ( g_model.frskyComPort == 0 )
 		{
-//			if ( CaptureMode == CAP_COM1 )
-//			{
-//				uint16_t rxchar ;
 				while ( ( rxchar = get_fifo128( &Com1_fifo ) ) != 0xFFFF )
 				{
 					frsky_receive_byte( rxchar ) ;
 				}
-//			}
-//			else
-//			{
-//				while ( ( rxchar = rxTelemetry() ) != 0xFFFF )
-//				{
-//					frsky_receive_byte( rxchar ) ;
-//				}
-//			}
 		}
-#ifndef PCBX12D
-#ifndef PCBX10
 		else
 		{
 			while ( ( rxchar = rxCom2() ) != 0xFFFF )
@@ -3038,10 +2750,7 @@ extern uint8_t s_current_protocol[] ;
 				frsky_receive_byte( rxchar ) ;
 			}
 		}
-#endif
-#endif
 	}
-#endif
 
 	if ( fivems )
 	{

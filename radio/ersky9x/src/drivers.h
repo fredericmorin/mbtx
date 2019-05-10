@@ -175,12 +175,7 @@ extern struct t_fifo128 Script_fifo ;
 
 extern uint8_t Scc_baudrate ;				// 0 for 125000, 1 for 115200
 
-#ifdef REVX
-extern int32_t getJetiWord( void ) ;
 extern volatile uint16_t Analog_values[] ;
-#else
-extern volatile uint16_t Analog_values[] ;
-#endif
 extern uint16_t Temperature ;		// Raw temp reading
 extern uint16_t Max_temperature ;
 
@@ -189,42 +184,23 @@ void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity ) ;
 
 extern volatile uint8_t Spi_complete ;
 
-#ifdef PCB9XT
-extern uint16_t rxTelemetry( void ) ;
-extern void init_software_remote( void ) ;
-#endif
-
-#ifdef PCBX9D
 extern void ConsoleInit( void ) ;
 extern uint16_t rxTelemetry( void ) ;
 extern void USART6_Sbus_configure( void ) ;
 extern void stop_USART6_Sbus( void ) ;
 extern void com1Parity( uint32_t even ) ;
 extern void com2Parity( uint32_t even ) ;
-#endif
-
-#if defined(PCBX12D) || defined(PCBX10)
-extern void ConsoleInit( void ) ;
-extern void com2Parity( uint32_t even ) ;
-#endif
 
 
 //extern uint16_t DsmRxTimeout ;
 extern uint16_t WatchdogTimeout ;
 
-#if defined(PCBX9D) || defined(PCBSKY) || defined(PCBX12D) || defined(PCBX10)
 struct t_XjtHeartbeatCapture
 {
 	uint16_t value ;
 	uint16_t valid ;
 } ;
 extern struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
-#endif                              
-
-#ifdef PCBSKY
-void init_pb14_heartbeat() ;
-void stop_pb14_heartbeat() ;
-#endif                              
 
 extern void putEvent( register uint8_t evt) ;
 extern void UART_Configure( uint32_t baudrate, uint32_t masterClock) ;
@@ -235,14 +211,8 @@ extern void com1_timeout_enable( void ) ;
 extern void UART_Sbus_configure( uint32_t masterClock ) ;
 extern void UART_Sbus57600_configure( uint32_t masterClock ) ;
 extern void jetiSendWord( uint16_t word ) ;
-#ifdef PCBX9D
 void init_xjt_heartbeat( void ) ;
 void stop_xjt_heartbeat( void ) ;
-#endif
-#if defined(PCBX12D) || defined(PCBX10)
-void init_xjt_heartbeat( void ) ;
-void stop_xjt_heartbeat( void ) ;
-#endif
 extern void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity ) ;
 extern void init_software_com2(uint32_t baudrate, uint32_t invert, uint32_t parity ) ;
 extern void disable_software_com1( void ) ;
@@ -257,9 +227,6 @@ extern uint16_t rx2nduart( void ) ;
 extern void UART3_Configure( uint32_t baudrate, uint32_t masterClock) ;
 extern void txmitBt( uint8_t c ) ;
 extern int32_t rxBtuart( void ) ;
-#ifdef ACCESS
-uint32_t accessSportPacketSend( uint8_t *pdata, uint16_t index ) ;
-#endif
 extern uint32_t sportPacketSend( uint8_t *pdata, uint8_t index ) ;
 extern uint32_t xfirePacketSend( uint8_t length, uint8_t command, uint8_t *data ) ;
 
@@ -291,10 +258,6 @@ extern void p8hex( uint32_t value ) ;
 extern void p4hex( uint16_t value ) ;
 extern void p2hex( unsigned char c ) ;
 extern void hex_digit_send( unsigned char c ) ;
-#ifdef PCBSKY
-extern void start_timer4( void ) ;
-extern void read_adc(void ) ;
-#endif
 extern void xread_9_adc(void ) ;
 extern void init_adc( void ) ;
 void set_stick_gain( uint32_t gains ) ;
@@ -306,20 +269,6 @@ void start_ppm_capture( void ) ;
 void end_ppm_capture( void ) ;
 extern void start_2Mhz_timer( void ) ;
 
-#ifdef PCB9XT
-#define BL_RED		0
-#define BL_GREEN	1
-#define BL_BLUE		2
-#define BL_ALL		3
-extern uint8_t BlChanged ;
-extern void BlSetColour( uint32_t level, uint32_t colour ) ;
-extern void BlSetAllColours( uint32_t rlevel, uint32_t glevel, uint32_t blevel ) ;
-extern void backlightSend() ;
-//extern void backlightReset( void ) ;
-extern void consoleInit( void ) ;
-extern void UART4SetBaudrate ( uint32_t baudrate ) ;
-#endif	// PCB9XT
-
 extern void disable_ssc( void ) ;
 
 //#define SPORT_MODE_HARDWARE		0
@@ -330,33 +279,7 @@ extern void disable_ssc( void ) ;
 //extern void x9dSPortInit( uint32_t baudRate, uint32_t mode, uint32_t invert, uint32_t parity ) ;
 extern void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive ) ;
 //void disable_software_com1( void ) ;
-#ifdef PCB9XT
-void x9dHubTxStart( uint8_t *buffer, uint32_t count ) ;
-uint32_t hubTxPending( void ) ;
-void com3Init( uint32_t baudrate ) ;
-void com1Parity( uint32_t even ) ;
-void com2Parity( uint32_t even ) ;
-void com3Parity( uint32_t even ) ;
-void com3Stop( void ) ;
-void Com3SetBaudrate ( uint32_t baudrate ) ;
-#endif
 
-#ifdef PCBX7
-void com3Init( uint32_t baudrate ) ;
-void com3Parity( uint32_t even ) ;
-void com3Stop( void ) ;
-void Com3SetBaudrate ( uint32_t baudrate ) ;
-#endif
-
-#if defined(PCBX12D) || defined(PCBX10)
-void USART6_configure( void ) ;
-void USART6SetBaudrate( uint32_t baudrate ) ;
-#endif
-
-#ifdef PCBSKY
-//void com1Parity( uint32_t even ) ;
-//void com2Parity( uint32_t even ) ;
-#endif
 
 uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate ) ;
 
@@ -365,9 +288,6 @@ extern void init_SDcard( void ) ;
 //------------------------------------------------------------------------------
 /// Detect if SD card is connected
 //------------------------------------------------------------------------------
-#ifdef PCBSKY
-#define CardIsPresent() ( (PIOB->PIO_PDSR & PIO_PB7) == 0 )
-#endif
 
 extern uint32_t Card_ID[4] ;
 extern uint32_t Card_SCR[2] ;

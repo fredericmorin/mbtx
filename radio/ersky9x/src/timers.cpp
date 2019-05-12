@@ -1162,7 +1162,7 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 		}
 		else if ( required_baudrate == SCC_BAUD_100000 )
 		{
-			BITLEN_Serial = (10*2) ;
+			BITLEN_Serial = (4*2) ;  // 250000 baudrate
 		}
 		else
 		{

@@ -16629,6 +16629,9 @@ void menuDebug(uint8_t event)
 	}
 
 
+ lcd_outhex2( 0,  3*FH, MultiHeartbeatCapture.valid ) ;
+ lcd_outhex4( 25,  3*FH, MultiHeartbeatCapture.value ) ;
+ lcd_outhex4( 50,  3*FH, MultiHeartbeatCapture.offset ) ;
 
 
 

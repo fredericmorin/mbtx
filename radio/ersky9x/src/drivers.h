@@ -202,6 +202,16 @@ struct t_XjtHeartbeatCapture
 } ;
 extern struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
 
+
+struct t_MultiHeartbeatCapture
+{
+	uint16_t value ;
+	uint16_t offset ;
+	uint16_t valid ;
+} ;
+extern struct t_MultiHeartbeatCapture MultiHeartbeatCapture ;
+
+
 extern void putEvent( register uint8_t evt) ;
 extern void UART_Configure( uint32_t baudrate, uint32_t masterClock) ;
 //extern void UART2_Configure( uint32_t baudrate, uint32_t masterClock) ;

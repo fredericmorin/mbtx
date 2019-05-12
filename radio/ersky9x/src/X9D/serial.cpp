@@ -281,6 +281,12 @@ extern "C" void USART2_IRQHandler()
 		{
 			RxIntCount += 1 ;
 			put_fifo128( &Com1_fifo, data ) ;
+
+			if (data == 0x7E) {
+						MultiHeartbeatCapture.value = getTmr2MHz();
+						MultiHeartbeatCapture.valid = 1;
+			}
+
 			if ( FrskyTelemetryType == FRSKY_TEL_SPORT )		// SPORT
 			{
 				if ( LastReceivedSportByte == 0x7E && TelemetryTx.sportCount > 0 && data == TelemetryTx.SportTx.index )

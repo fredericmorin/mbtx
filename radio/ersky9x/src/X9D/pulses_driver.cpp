@@ -551,8 +551,11 @@ void init_ext_serial( uint32_t type )
 		}
 		x *= 2000 ;
 		x += 7000 * 2 ;
-  	TIM8->ARR = x ;             // 11mS
-  	TIM8->CCR2 = x-4000 ;       // Update time
+  	// TIM8->ARR = x ;             // 11mS
+  	// TIM8->CCR2 = x-4000 ;       // Update time
+    TIM8->ARR = 17999 ;    // 9mS
+    TIM8->CCR2 = 16000 ;   // Update time
+
 	}
   TIM8->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;               // 0.5uS from 30MHz
   TIM8->CCER = TIM_CCER_CC1NE ;
@@ -740,7 +743,7 @@ extern "C" void TIM8_CC_IRQHandler()
 			XjtHbeatOffset = TIM7->CNT - XjtHeartbeatCapture.value ;
 			if ( XjtHeartbeatCapture.valid )
 			{
-				if ( XjtHbeatOffset > 0x2200 )
+				if ( XjtHbeatOffset > 0x2200 )  // 8704  = 4352us
 				{
 					TIM8->ARR = 17979 ;                     // 9mS
 				}
@@ -759,6 +762,19 @@ extern "C" void TIM8_CC_IRQHandler()
   }
   else if ( (s_current_protocol[EXTERNAL_MODULE] == PROTO_DSM2 ) || (s_current_protocol[EXTERNAL_MODULE] == PROTO_MULTI ) )
 	{
+		MultiHeartbeatCapture.offset = (TIM7->CNT - MultiHeartbeatCapture.value) % 18000 ;  // 9ms
+		if ( MultiHeartbeatCapture.valid )
+		{
+      #define CORRECTION 200                       // 0.1ms
+			if ( MultiHeartbeatCapture.offset > 11000 )  // 5.5ms
+			{
+				TIM8->ARR = (18000 - CORRECTION);          // 9mS - corr
+			}
+			else
+			{
+				TIM8->ARR = (18000 + CORRECTION);          // 9mS + corr
+			}
+		}
     DMA2_Stream2->CR &= ~DMA_SxCR_EN ;              // Disable DMA
     DMA2->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2 | DMA_LIFCR_CTEIF2 | DMA_LIFCR_CDMEIF2 | DMA_LIFCR_CFEIF2 ; // Write ones to clear bits
     DMA2_Stream2->M0AR = CONVERT_PTR(&dsm2Stream[1][1]);

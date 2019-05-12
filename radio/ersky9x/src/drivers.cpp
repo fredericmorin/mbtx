@@ -972,6 +972,7 @@ void start_2Mhz_timer()
 
 
 struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
+struct t_MultiHeartbeatCapture MultiHeartbeatCapture = {0,0,0} ;
 
 void init_xjt_heartbeat()
 {

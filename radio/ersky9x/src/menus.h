@@ -174,9 +174,6 @@ extern void menuUp1(uint8_t event) ;
 extern void menuUpdate(uint8_t event) ;
 //extern void inactivityCheck( void ) ;
 extern int16_t scaleAnalog( int16_t v, uint8_t channel ) ;
-#if defined(PCBX12D) || defined(PCBX10)
-void displayStatusLine( uint32_t scriptPercent ) ;
-#endif
 
 extern void parseMultiData( void ) ;
 

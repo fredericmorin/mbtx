@@ -16264,11 +16264,7 @@ void menuProcStatistic2(uint8_t event)
   lcd_puts_Pleft( 2*FH, XPSTR("tmain          ms"));
   lcd_outdezAtt(14*FW , 2*FH, (g_timeMain)/20 ,PREC2);
 extern uint32_t MixerRate ;
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
-	lcd_puts_Pleft( 4*FH, XPSTR("Mixer Rate"));
-#endif
   lcd_outdezAtt(20*FW , 4*FH, MixerRate, 0 ) ;
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
   lcd_puts_Pleft( 3*FH, XPSTR("trefresh       ms"));
   lcd_outdezAtt(14*FW , 3*FH, (g_timeRfsh)/20 ,PREC2);
   lcd_puts_Pleft( 4*FH, XPSTR("tmixer         ms"));
@@ -16276,7 +16272,6 @@ extern uint32_t MixerRate ;
 
 //	lcd_puts_Pleft( 1*FH, XPSTR("ttimer1        us"));
 //  lcd_outdezAtt(14*FW , 1*FH, (g_timePXX)/2 ,0);
-#endif
 
 //#ifdef PCBX12D
 //static uint16_t tt ;
@@ -16297,11 +16292,6 @@ extern uint32_t MixerRate ;
 //	lcd_outhex4( 134, 4*FH, MenuTime ) ; lcd_outdezAtt( 190, 4*FH, mt/2, 0 ) ;
 //#endif
 
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
-  lcd_puts_Pleft( 3*FH, XPSTR("tBgRead        ms"));
-  lcd_outdezAtt(14*FW , 3*FH, (g_timeBgRead)/20 ,PREC2);
-#endif
-
 extern uint8_t AudioVoiceCountUnderruns ;
 	lcd_puts_Pleft( 5*FH, XPSTR("Voice underruns"));
   lcd_outdezAtt( 20*FW, 5*FH, AudioVoiceCountUnderruns, 0 ) ;
@@ -16318,152 +16308,6 @@ extern uint32_t IdlePercent ;
   lcd_outdezAtt( 14*FW-1, 7*FH, IdlePercent ,PREC2);
 //  lcd_outhex4( 75, 7*FH, IdlePercent ) ;
 }
-
-
-#ifdef IMAGE_128
-#if defined(PCBSKY) || defined(PCB9XT)
-extern uint8_t ModelImage[] ;
-extern uint8_t ModelImageValid ;
-
-void roundBox5( uint32_t x, uint32_t y )
-{
-	lcd_vline( x-2, y-1, 3 ) ;
-	lcd_vline( x+2, y-1, 3 ) ;
-	lcd_hline( x-1, y-2, 3 ) ;
-	lcd_hline( x-1, y+2, 3 ) ;
-}
-
-void menuImage(uint8_t event)
-{
- 	uint32_t i ;
-	int8_t *cs = phyStick ;
-
-	MENU(XPSTR("Image"), menuTabStat, e_image, 1, {0/*, 0*/}) ;
-	lcd_clear() ;
-	if ( ModelImageValid )
-	{
-		lcd_bitmap( 64, 0, ModelImage, 64, 4 /*bytes*/, 0 ) ;
-	}
-
- 	lcd_putsnAtt(0, 0, g_model.name, sizeof(g_model.name), BOLD ) ;
-	putsVBat( 6*FW+1, 2*FH, DBLSIZE|NO_UNIT|CONDENSED);
-  lcd_putc( 6*FW+2, 3*FH, 'V');
-
-  DO_SQUARE( LBOX_CENTERX, (SCREEN_HEIGHT-9-BOX_WIDTH/2-1)+3, BOX_WIDTH ) ;
-  DO_CROSS( LBOX_CENTERX, (SCREEN_HEIGHT-9-BOX_WIDTH/2-1)+3,3 ) ;
-	DO_SQUARE( LBOX_CENTERX +( cs[0]/((2*RESX/16)/BOX_LIMIT)), ((SCREEN_HEIGHT-9-BOX_WIDTH/2-1)+3)-( cs[1]/((2*RESX/16)/BOX_LIMIT)), MARKER_WIDTH ) ;
-
-	DO_SQUARE( RBOX_CENTERX, (SCREEN_HEIGHT-9-BOX_WIDTH/2-1)+3, BOX_WIDTH ) ;
-  DO_CROSS( RBOX_CENTERX, (SCREEN_HEIGHT-9-BOX_WIDTH/2-1)+3,3 ) ;
-	DO_SQUARE( RBOX_CENTERX +( cs[3]/((2*RESX/16)/BOX_LIMIT)), ((SCREEN_HEIGHT-9-BOX_WIDTH/2-1)+3)-( cs[2]/((2*RESX/16)/BOX_LIMIT)), MARKER_WIDTH ) ;
-//	telltale( 30, cs[0], cs[1] ) ;
-
-  {
-    uint8_t x, y, len ;			// declare temporary variables
-#if defined(PCBSKY) || defined(PCB9XT)
-		uint32_t maxy ;
-		maxy = 7 ;
-		x = -5 ;
-		if ( g_eeGeneral.extraPotsSource[0] )
-		{
-			x = - 8 ;
-			maxy = 8 ;
-		}
-
-    for( y = 4 ; y < maxy ; x += 5, y += 1 )
-    {
-      len = ((calibratedStick[y]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
-      V_BAR(SCREEN_WIDTH/2+x,SCREEN_HEIGHT-6, len )
-    }
-#endif
-	}
-
-	lcd_hline( LBOX_CENTERX-12, 61, 25 ) ;
-	lcd_hline( RBOX_CENTERX-12, 61, 25 ) ;
-	lcd_vline( LBOX_CENTERX-15, 34, 25 ) ;
-	lcd_vline( RBOX_CENTERX+15, 34, 25 ) ;
-
-  for( i=0 ; i<4 ; i++ )
-	{
-  	static uint8_t x[4]    = {LBOX_CENTERX,LBOX_CENTERX-15,RBOX_CENTERX+15,RBOX_CENTERX	} ;
-		int16_t valt = getTrimValue( CurrentPhase, i ) ;
-		uint8_t centre = (valt == 0) ;
-  	int8_t val = max((int8_t)-(15+1),min((int8_t)(15+1),(int8_t)(valt/10)));
-  	uint8_t xm, ym ;
-		xm = modeFixValue( i ) ;
-    xm = x[xm-1] ;
-
-		pushPlotType( PLOT_BLACK ) ;
-    if( (i == 1) || ( i == 2 ))
-		{
-  	  ym = 47 - val ;
-			if ( centre )
-			{
-				lcd_vline( xm-1, ym-1, 3 ) ;
-				lcd_vline( xm+1, ym-1, 3 ) ;
-			}
-			else
-			{
-				if ( valt < 0 )
-				{
-					lcd_hline( xm-1, ym+1, 3 ) ;
-					plotType = PLOT_WHITE ;
-					lcd_hline( xm-1, ym-1, 3 ) ;
-				}
-				else
-				{
-					lcd_hline( xm-1, ym-1, 3 ) ;
-					plotType = PLOT_WHITE ;
-					lcd_hline( xm-1, ym+1, 3 ) ;
-				}
-				lcd_hline( xm-1, ym, 3 ) ;
-			}
-
-		}
-		else
-		{
-  	  ym=61;
-			xm += val ;
-
-			if ( centre )
-			{
-				lcd_hline( xm-1, ym-1, 3 ) ;
-				lcd_hline( xm-1, ym+1, 3 ) ;
-			}
-			else
-			{
-				if ( valt < 0 )
-				{
-					lcd_vline( xm-1, ym-1, 3 ) ;
-					pushPlotType( PLOT_WHITE ) ;
-					lcd_vline( xm+1, ym-1, 3 ) ;
-					popPlotType() ;
-				}
-				else
-				{
-					lcd_vline( xm+1, ym-1, 3 ) ;
-					pushPlotType( PLOT_WHITE ) ;
-					lcd_vline( xm-1, ym-1, 3 ) ;
-					popPlotType() ;
-				}
-				lcd_vline( xm, ym-1, 3 ) ;
-		  }
-		}
-		roundBox5( xm, ym ) ;
-		popPlotType() ;
-	}
-
-//extern uint8_t LoadImageResult ;
-//extern TCHAR ImageFilename[] ;
-
-//lcd_puts_Pleft( 6*FH, ImageFilename ) ;
-//lcd_outhex4( 60,  7*FH, ModelImageValid ) ;
-//lcd_outhex4( 90,  7*FH, LoadImageResult ) ;
-
-
-}
-#endif
-#endif
 
 
 #if defined(LUA) || defined(BASIC)

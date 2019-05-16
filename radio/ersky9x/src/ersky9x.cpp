@@ -38,13 +38,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#ifdef PCBSKY
-#include "AT91SAM3S4.h"
-#ifndef SIMU
-#include "core_cm3.h"
-#endif
-#endif
-
 #include "ersky9x.h"
 #include "myeeprom.h"
 #include "audio.h"
@@ -52,16 +45,9 @@
 #include "lcd.h"
 #include "drivers.h"
 
-#ifdef PCBSKY
-#include "file.h"
-#endif
-
 #include "menus.h"
 #include "mixer.h"
 #include "timers.h"
-#if defined(PCBX12D) || defined(PCBX10)
-#include "X12D/stm32f4xx_gpio.h"
-#endif
 #include "logicio.h"
 #include "pulses.h"
 #include "stringidx.h"
@@ -196,14 +182,6 @@ uint8_t UserTimer1 ;
 
 const char * const *Language = English ;
 
-// const uint8_t splashdata[] = { 'S','P','S',0,
-// #ifdef PCBX9LITE
-// #include "FrSplash.lbm"
-// #else
-// #include "sTxsplash.lbm"
-// #endif
-// 	'S','P','E',0};
-
 #include "debug.h"
 
 t_time Time ;
@@ -269,16 +247,9 @@ uint16_t rxCom2( void ) ;
 
 uint16_t SixPositionTable[5] ;
 
-#ifdef PCBSKY
-uint16_t anaIn( uint8_t chan ) ;
-#endif
 void getADC_single( void ) ;
 void getADC_osmp( void ) ;
 void getADC_filt( void ) ;
-#ifdef PCBSKY
-void read_adc( void ) ;
-void init_adc( void ) ;
-#endif
 
 #ifdef PCBX9D
 void check6pos( void ) ;
@@ -462,95 +433,50 @@ void setLanguage()
 	{
 		case 1 :
 			Language = French ;
-#if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = font_fr_h_extra ;
-			ExtraHorusBigFont = font_fr_h_big_extra ;
-#else
 			ExtraFont = font_fr_extra ;
 			ExtraBigFont = font_fr_big_extra ;
-#endif
 		break ;
 		case 2 :
 			Language = German ;
-#if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = font_de_h_extra ;
-			ExtraHorusBigFont = font_de_h_big_extra ;
-#else
 			ExtraFont = font_de_extra ;
 			ExtraBigFont = font_de_big_extra ;
-#endif
 		break ;
 #ifndef SMALL
 		case 3 :
 			Language = Norwegian ;
-#if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = font_se_h_extra ;
-			ExtraHorusBigFont = font_se_h_big_extra ;
-#else
 			ExtraFont = font_se_extra ;
 			ExtraBigFont = font_se_big_extra ;
-#endif
 		break ;
 		case 4 :
 			Language = Swedish ;
-#if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = font_se_h_extra ;
-			ExtraHorusBigFont = font_se_h_big_extra ;
-#else
 			ExtraFont = font_se_extra ;
 			ExtraBigFont = font_se_big_extra ;
-#endif
 		break ;
 		case 5 :
 			Language = Italian ;
-#if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = font_it_h_extra ;
-			ExtraHorusBigFont = NULL ;
-#else
 			ExtraFont = font_it_extra ;
 			ExtraBigFont = NULL ;
-#endif
 		break ;
 		case 6 :
 			Language = Polish ;
-#if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = font_pl_h_extra ;
-			ExtraHorusBigFont = NULL ;
-#else
 			ExtraFont = font_pl_extra ;
 			ExtraBigFont = NULL ;
-#endif
 		break ;
 		case 7 :
 			Language = Vietnamese ;
-#if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = NULL ;
-			ExtraHorusBigFont = NULL ;
-#else
 			ExtraFont = NULL ;
 			ExtraBigFont = NULL ;
-#endif
 		break ;
 		case 8 :
 			Language = Spanish ;
-#if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = NULL ;
-			ExtraHorusBigFont = NULL ;
-#else
 			ExtraFont = NULL ;
 			ExtraBigFont = NULL ;
-#endif
 		break ;
 #endif
 		default :
 			Language = English ;
-#if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = NULL ;
-			ExtraHorusBigFont = NULL ;
-#else
 			ExtraFont = NULL ;
 			ExtraBigFont = NULL ;
-#endif
 		break ;
 	}
 }
@@ -583,32 +509,7 @@ static void checkWarnings()
 
 inline uint8_t keyDown()
 {
-#if defined(REV9E) || defined(PCBX7) || defined(PCBX12D) || defined(PCBX9LITE) || defined(PCBX10)
-#ifdef PCBX7
- #ifndef PCBT12
-	uint8_t value = (~GPIOE->IDR & PIN_BUTTON_ENCODER) ? 0x80 : 0 ;
- #endif
-#endif // PCBX7
-#ifdef PCBX9LITE
-	uint8_t value = (~GPIOE->IDR & PIN_BUTTON_ENCODER) ? 0x80 : 0 ;
-#endif // PCBX9LITE
-#ifdef REV9E
-	uint8_t value = (~GPIOF->IDR & PIN_BUTTON_ENCODER) ? 0x80 : 0 ;
-#endif // REV9E
-#if defined(PCBX12D)
-	uint8_t value = (~GPIOC->IDR & 0x0002) ? 0x80 : 0 ;
-#endif // PCBX12D
-#if defined(PCBX10)
-	uint8_t value = (~GPIOI->IDR & 0x0100) ? 0x80 : 0 ;
-#endif // PCBX12D
- #ifndef PCBT12
-	return (~read_keys() & 0x7E ) | value ;
- #else
 	return ~read_keys() & 0x7E ;
- #endif
-#else
-	return ~read_keys() & 0x7E ;
-#endif
 }
 
 void clearKeyEvents()
@@ -616,9 +517,6 @@ void clearKeyEvents()
     while(keyDown())
 		{
 			  // loop until all keys are up
-#if defined(PCBX12D) || defined(PCBX10)
-			getADC_single() ;	// For nav joystick on left
-#endif
 			wdt_reset() ;
 		}
     putEvent(0);
@@ -648,23 +546,11 @@ void update_mode(void* pdata)
 	g_menuStack[1] = menuUp1 ;	// this is so the first instance of [MENU LONG] doesn't freak out!
 	MaintenanceRunning = 1 ;
 	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
-#ifdef ACCESS
-#ifdef PCBX9LITE
-	configure_pins( INTMODULE_TX_GPIO_PIN, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_LOW ) ;
-	GPIO_ResetBits( INTMODULE_TX_GPIO, INTMODULE_TX_GPIO_PIN) ;
-#endif
-#endif
-#ifdef PCB9XT
-	BlSetAllColours( 0, 30, 60 ) ;
-#endif
 	{
 		uint8_t evt=getEvent() ;
 		killEvents( evt ) ;
 		putEvent(0) ;
 	}
-#ifdef PCBX9LITE
-	ledBlue() ;
-#endif
   while (1)
 	{
 		if ( (g_menuStackPtr==0) && (g_menuStack[0] == menuUpdate) )
@@ -734,9 +620,6 @@ void update_mode(void* pdata)
 		{
 			displayTimer = 0 ;
     	refreshDisplay() ;
-	#if defined(PCBX12D) || defined(PCBX10)
-			lcd_clearBackground() ;	// Start clearing other frame
-	#endif
 		}
 
 		wdt_reset();
@@ -878,35 +761,25 @@ int main( void )
 #endif
 
 	init_soft_power() ;
-
 	initWatchdog() ;
-
 	init_keys() ;
-
 	setup_switches() ;
-
 	ConsoleInit() ;
-
 	init5msTimer() ;
   WatchdogTimeout = 100 ;
-
 	init_hw_timer() ;
-
 	init_adc() ;
-
 	I2C_EE_Init() ;
 	setVolume( 0 ) ;
 
 	// SD card detect pin
 	configure_pins( GPIO_Pin_CP, PIN_PORTD | PIN_INPUT | PIN_PULLUP ) ;
-
 	disk_initialize( 0 ) ;
 	sdInit() ;
 
 	__enable_irq() ;
 
 	lcdInit() ;
-
 #ifdef PCBX9D
   lcd_clear() ;
 	refreshDisplay() ;
@@ -922,7 +795,7 @@ int main( void )
 	eeReadAll() ;
 	protocolsToModules() ;
 
-		g_eeGeneral.physicalRadioType = PHYSICAL_TARANIS_PLUS ;
+	g_eeGeneral.physicalRadioType = PHYSICAL_TARANIS_PLUS ;
 
 	SportStreamingStarted = 0 ;
 	setLanguage() ;
@@ -1296,16 +1169,12 @@ void main_loop(void* pdata)
 
 // Switches PE2,7,8,9,13,14
 	configure_pins( 0x6384, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
-
 	init_no_pulses( 0 ) ;
 	init_no_pulses( 1 ) ;
-
 	init_trainer_capture(0) ;
-
 	rtcInit() ;
 
 	init_xjt_heartbeat() ;
-
 	heartbeat_running = 1 ;
 
   if (!g_eeGeneral.unexpectedShutdown)
@@ -1323,7 +1192,6 @@ extern uint8_t ModelImageValid ;
 		loadModelImage() ;
 	}
 	Activated = 1 ;
-
 
 	if ( ( ( ResetReason & RCC_CSR_WDGRSTF ) != RCC_CSR_WDGRSTF ) && !unexpectedShutdown )	// Not watchdog
 	{
@@ -4364,7 +4232,6 @@ void perMain( uint32_t no_menu )
 	 		StepSize = 20 ;
 	 		Tevent = evt ;
 
-#ifdef PCBX9D
 			{
 extern uint8_t ImageDisplay ;
 extern uint8_t ImageX ;
@@ -4373,17 +4240,6 @@ extern uint8_t ImageY ;
 				ImageY = 32 ;
 				ImageDisplay = 1 ;
 			}
-#endif
-#if defined(PCBX12D) || defined(PCBX10)
-			{
-extern uint8_t ImageDisplay ;
-extern uint8_t ImageX ;
-extern uint8_t ImageY ;
-				ImageX = 130 ;
-				ImageY = 32 ;
-				ImageDisplay = 1 ;
-			}
-#endif
 
 #if defined(LUA) || defined(BASIC)
   // if Lua standalone, run it and don't clear the screen (Lua will do it)
@@ -4502,39 +4358,15 @@ extern uint32_t TotalExecTime ;
 			}
 #endif
 
-#if defined(PCBX12D) || defined(PCBX10)
-			t1 = getTmr2MHz();
-			updatePicture() ;
-#endif
-
 			g_menuStack[g_menuStackPtr](evt);
 			refreshNeeded = 4 ;
-#if defined(PCBX12D) || defined(PCBX10)
-			t1 = getTmr2MHz() - t1 ;
-			if ( Xcounter == 0 )
-			{
-				MenuTime = t1 ;
-			}
-#endif
 		}
 
 
-	#if defined(PCBX9D) || defined(PCBSKY) || defined(PCB9XT)
 			if ( ( refreshNeeded == 2 ) || ( ( refreshNeeded == 4 ) && ( ( lastTMR & 3 ) == 0 ) ) )
-	#endif
-#if defined(PCBX12D) || defined(PCBX10)
-			if ( refreshNeeded != 1 )
-	#endif
 			{
-#if defined(PCBX12D) || defined(PCBX10)
-				displayStatusLine(ScriptActive) ;
-				ScriptActive = 0 ;
-	#endif
 				uint16_t t1 = getTmr2MHz() ;
   		  refreshDisplay() ;
-#if defined(PCBX12D) || defined(PCBX10)
-				lcd_clearBackground() ;	// Start clearing other frame
-	#endif
 				t1 = getTmr2MHz() - t1 ;
 				g_timeRfsh = t1 ;
 			}
@@ -4740,30 +4572,6 @@ uint32_t getAnalogIndex( uint32_t index )
 	return z ;
 }
 
-
-#ifdef ARUNI
-static uint8_t qSixPosDelayFiltering(uint8_t x, uint16_t y)
-{
-  if (qSixPosCalibrating() || g_eeGeneral.sixPosDelayFilter) {
-    uint8_t sixpos = (( g_eeGeneral.analogMapping & MASK_6POS ) >> 2) + 3;
-    if (x == sixpos) {
-      uint8_t v7 = (y >> 4);  // 11b to 7b truncation
-      uint8_t diff;
-      if (v7 > SixPosValue) {
-        diff = v7 - SixPosValue;
-      } else {
-        diff = SixPosValue - v7;
-      }
-      if (diff > 1) {         // sixpos value changed
-        SixPosValue = v7;     // save truncated 7b analog value
-        SixPosDelay = 25;     // 25x10ms=250ms delay filtering
-      }                       // ala retriggerable one-shot
-      return 1;
-    }
-  }
-  return 0;
-}
-#endif
 
 void getADC_single()
 {

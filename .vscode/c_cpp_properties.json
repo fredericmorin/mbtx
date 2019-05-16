@@ -9,7 +9,6 @@
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE",
-                "PCBX9D",
                 "stm32f205",
                 "RUN_FROM_FLASH=1",
                 "BASIC",

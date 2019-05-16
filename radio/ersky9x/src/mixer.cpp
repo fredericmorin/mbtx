@@ -279,7 +279,6 @@ int16_t scaleAnalog( int16_t v, uint8_t channel )
 	int16_t pos ;
 	int16_t deadband = ( channel < 4 ) ? g_eeGeneral.stickDeadband[channel] : 0 ;
 
-#ifndef SIMU
 	mid = *CalibMid[channel] ;
   pos = *CalibSpanPos[channel] - deadband ;
   neg = *CalibSpanNeg[channel] - deadband ;
@@ -304,7 +303,6 @@ int16_t scaleAnalog( int16_t v, uint8_t channel )
 			}
 		}
 	}
-#if defined(REVPLUS) || defined(REV9E)
 	else if ( ( channel < 6 ) || ( channel == 8 ) )
 	{
 		uint8_t chan = channel - 3 ;
@@ -318,30 +316,9 @@ int16_t scaleAnalog( int16_t v, uint8_t channel )
 			return v ;
 		}
 	}
-#else
-	else if ( channel < 7 )
-	{
-		if ( ( channel - 3 ) == ( ( g_eeGeneral.analogMapping & MASK_6POS ) >> 2 ) )
-		{
-			// Pot mapped as 6-pos switch
-			v = ((int32_t)switchPosition( HSW_Ele6pos0 ) * (int32_t)RESX*2 - (int32_t)RESX*5)/5 ;
-			return v ;
-		}
-	}
-#endif
 
-//#ifdef REVX
-//	if ( channel < 4 )
-//	{
-//		if ( ( v > -1) && ( v < 1 ) )
-//		{
-//			v = 0 ;
-//		}
-//	}
-//#endif
 	v  =  v * (int32_t)RESX /  (max((int16_t)100,(v>0 ? pos : neg ) ) ) ;
 
-#endif // SIMU
 	if(v <= -RESX) v = -RESX;
 	if(v >=  RESX) v =  RESX;
 	if ( throttleReversed() )
@@ -495,12 +472,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 				// Set up anas[] array
         anas[MIX_MAX-1]  = RESX;     // MAX
         anas[MIX_FULL-1] = RESX;     // FULL
-#if defined(PCBSKY) || defined(PCB9XT)
-        anas[MIX_3POS-1] = keyState(SW_ID0) ? -1024 : (keyState(SW_ID1) ? 0 : 1024) ;
-#endif
-#ifdef PCBX9D
         anas[MIX_3POS-1] = keyState(SW_SC0) ? -1024 : (keyState(SW_SC1) ? 0 : 1024) ;
-#endif
         for(uint8_t i=0;i<4;i++) anas[i+PPM_BASE] = (g_ppmIns[i] - g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[i].calib)*2; //add ppm channels
         for(uint8_t i=4;i<NUM_PPM;i++)    anas[i+PPM_BASE]   = g_ppmIns[i]*2; //add ppm channels
         for(uint8_t i=0;i<NUM_SKYCHNOUT+EXTRA_SKYCHANNELS;i++) anas[i+CHOUT_BASE] = chans[i]; //other mixes previous outputs
@@ -753,39 +725,6 @@ void perOut(int16_t *chanOut, uint8_t att )
 							}
 						}
 #endif
-#if defined(PCBSKY) || defined(PCB9XT)
-						if ( k == MIX_3POS-1 )
-						{
-							if ( md->switchSource > 6 )
-							{
-								if ( md->switchSource == 31 )
-								{
-									v = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2048 - 5120)/5 ;
-								}
-								else
-								{
-									v = getSwitch( CSW_INDEX+md->switchSource-6, 0, 0 ) ;
-									v = v ? 1024 : -1024 ;
-								}
-							}
-							else
-							{
-								uint32_t sw = Sw3PosList[md->switchSource] ;
-								if ( Sw3PosCount[md->switchSource] == 2 )
-								{
-        					v = hwKeyState(sw) ? 1024 : -1024 ;
-								}
-								else if ( Sw3PosCount[md->switchSource] == 6 )
-								{
-									v = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2048 - 5120)/5 ;
-								}
-								else
-								{
-        					v = hwKeyState(sw) ? -1024 : (hwKeyState(sw+1) ? 0 : 1024) ;
-								}
-							}
-						}
-#endif
 //            if(k>=CHOUT_BASE && (k<i)) v = chans[k]; // if we've already calculated the value - take it instead // anas[i+CHOUT_BASE] = chans[i]
 						if ( k >= CHOUT_BASE )
             {
@@ -856,11 +795,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 							else if ( k >= EXTRA_POTS_START-1 )
 							{
 								// An extra pot
-#ifdef PCBX7
-								v = calibratedStick[k-EXTRA_POTS_START+7] ;
-#else
 								v = calibratedStick[k-EXTRA_POTS_START+8] ;
-#endif
 							}
 						}
 						if(md->mixWarn) mixWarning |= 1<<(md->mixWarn-1); // Mix warning

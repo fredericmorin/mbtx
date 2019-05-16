@@ -729,11 +729,66 @@ static void disable_ext_ppm()
   EXTERNAL_RF_OFF();
 }
 
+extern int16_t scaleAnalog( int16_t v, uint8_t channel ) ;
+extern void getADC_single( void ) ;
+extern uint32_t MixerCount ;
+extern SKYMixData *mixAddress( uint32_t index ) ;
+extern int16_t calcExpo( uint8_t channel, int16_t value ) ;
+
 extern "C" void TIM8_CC_IRQHandler()
 {
   TIM8->DIER &= ~TIM_DIER_CC2IE ;         // stop this interrupt
   TIM8->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
 
+  ////////////////////////////////////////////////
+  // Refresh gimbals values right before the outbound packet is built by setupPulses()
+  getADC_single();
+  MixerCount += 1 ;  // help us see in the debug screen that we actually did something here
+  // re-re-re-reeeeeemiiiixx
+  {  // very simplified version of the mixer that distribute pots into channel outs.
+    uint8_t stickIndex = g_eeGeneral.stickMode*4 ;
+    int16_t rawSticks[4] ;
+    int16_t v;
+    int16_t anas[6] = {0};
+    // process value of the first 6 pots.
+    for (uint8_t i = 0; i < 6; i++) {
+      v = anaIn( i ) ;
+      v = scaleAnalog( v, i ) ;
+      uint8_t index = i ;
+      if ( i < 4 ) {
+        index = stickScramble[stickIndex+i];
+        rawSticks[index] = v; //set values for mixer
+        v = calcExpo( index, v ) ;
+      }
+      if ( i < 6 ) {
+        anas[index] = v ; //set values for mixer
+      }
+    }
+    // simple mix the first 4 outputs
+    for(uint8_t i=0;i<MAX_SKYMIXERS+EXTRA_SKYMIXERS;i++) {
+      SKYMixData *md = mixAddress(i);
+      if((md->destCh==0) || (md->destCh>NUM_SKYCHNOUT+EXTRA_SKYCHANNELS)) break;
+
+      uint8_t dest = md->destCh-1;
+      if (dest >= 4) continue;  // we dont output channel other than 0..3
+
+      uint8_t k = md->srcRaw - 1;
+      if (k >= 6) continue;  // we dont support analog source other than 0..5
+
+      v = 0;
+      if (k < 6) {
+        v = anas[k]; //Switch is on. MAX=FULL=512 or value.
+      }
+      if (k < 4) {
+        v = rawSticks[k]; //Switch is on. MAX=FULL=512 or value.
+      }
+
+      g_chans512[dest] = v;
+    }
+  }
+  ////////////////////////////////////////////////
+
+  // build packet going out using g_chans512 values
   setupPulses(EXTERNAL_MODULE) ;
 
   if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PXX)

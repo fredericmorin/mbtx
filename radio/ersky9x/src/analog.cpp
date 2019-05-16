@@ -97,9 +97,16 @@ void init_adc()
 	enableRtcBattery() ;
 }
 
+volatile uint8_t adc_in_progress = 0;
+
 uint32_t read_adc()
 {
 	uint32_t i ;
+
+	if (adc_in_progress) {
+		return 0;
+	}
+	adc_in_progress = 1;
 
 	DMA2_Stream4->CR &= ~DMA_SxCR_EN ;		// Disable DMA
 	ADC1->SR &= ~(uint32_t) ( ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR ) ;
@@ -136,6 +143,8 @@ uint32_t read_adc()
 	{
 		VbattRtc = Analog_values[10] ;
 	}
+
+	adc_in_progress = 0;
 
 	return ( i < 20000 ) ? 1 : 0 ;
 }

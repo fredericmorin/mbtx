@@ -16456,6 +16456,8 @@ extern int32_t Rotary_diff ;
 #endif
 
 extern uint8_t RawLogging ;
+extern uint16_t anaIn(uint8_t chan) ;
+extern int32_t readControl( uint8_t channel );
 
 void menuDebug(uint8_t event)
 {
@@ -16473,10 +16475,21 @@ void menuDebug(uint8_t event)
 	}
 
 
- lcd_outhex2( 0,  3*FH, MultiHeartbeatCapture.valid ) ;
- lcd_outhex4( 25,  3*FH, MultiHeartbeatCapture.value ) ;
- lcd_outhex4( 50,  3*FH, MultiHeartbeatCapture.offset ) ;
+ lcd_outhex2( 0,  1*FH, MultiHeartbeatCapture.valid ) ;
+ lcd_outhex4( 25,  1*FH, MultiHeartbeatCapture.value ) ;
+ lcd_outdez( 17*FW,  1*FH, MultiHeartbeatCapture.offset ) ;
 
+			// int16_t v = anaIn( i ) ;
+			// v = scaleAnalog( v, i ) ;
+ lcd_outdez( 0*FW,  2*FH, scaleAnalog(anaIn(0), 0) ) ;
+ lcd_outdez( 17*FW,  2*FH, scaleAnalog(anaIn(1), 1) ) ;
+ lcd_outdez( 0*FW, 3*FH, scaleAnalog(anaIn(2), 2) ) ;
+ lcd_outdez( 17*FW, 3*FH, scaleAnalog(anaIn(3), 3) ) ;
+ lcd_outdez( 0*FW,  4*FH, scaleAnalog(anaIn(4), 4) ) ;
+ lcd_outdez( 17*FW,  4*FH, scaleAnalog(anaIn(5), 5) ) ;
+
+ lcd_outdez( 0*FW,  5*FH, g_chans512[0] ) ;
+ lcd_outdez( 17*FW,  5*FH, g_chans512[1] ) ;
 
 
 
@@ -17955,6 +17968,7 @@ void menuProcBattery(uint8_t event)
 #ifndef SMALL
 extern uint32_t Master_frequency ;
  	lcd_outdezAtt( 5*FW, 7*FH, Master_frequency/1000000, 0 ) ;
+	lcd_puts_P ( 6*FW, 7*FH, XPSTR("MHz"));
 #endif
 }
 
